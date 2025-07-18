@@ -1,3 +1,6 @@
+// Simple in-memory storage for generated keys
+let generatedKeys = {};
+
 exports.handler = async (event, context) => {
     const headers = {
         'Access-Control-Allow-Origin': '*',
@@ -5,7 +8,6 @@ exports.handler = async (event, context) => {
         'Access-Control-Allow-Methods': 'POST, OPTIONS'
     };
 
-    // Handle preflight
     if (event.httpMethod === 'OPTIONS') {
         return { statusCode: 200, headers, body: '' };
     }
@@ -19,10 +21,9 @@ exports.handler = async (event, context) => {
     }
 
     try {
-        const body = JSON.parse(event.body);
-        const { keyCode, userName, adminPassword } = body;
+        const { keyCode, userName, expiryDate, encryptionKey, keyType, adminPassword } = JSON.parse(event.body);
         
-        // Simple admin check
+        // Admin authentication
         if (adminPassword !== 'admin2025') {
             return {
                 statusCode: 401,
@@ -34,22 +35,35 @@ exports.handler = async (event, context) => {
             };
         }
 
-        // For now, just return success (no actual database)
+        // Store the key in memory
+        generatedKeys[keyCode] = {
+            name: userName,
+            expiry: expiryDate,
+            encryptionKey: encryptionKey,
+            type: keyType,
+            active: true,
+            created: new Date().toISOString()
+        };
+
+        console.log('Key stored:', keyCode, generatedKeys[keyCode]);
+
         return {
             statusCode: 200,
             headers,
             body: JSON.stringify({
                 success: true,
-                message: 'Key created successfully (simulated)',
+                message: 'Key created and stored successfully',
                 key: {
                     keyCode: keyCode,
                     userName: userName,
-                    timestamp: new Date().toISOString()
+                    expiryDate: expiryDate,
+                    keyType: keyType
                 }
             })
         };
 
     } catch (error) {
+        console.error('Create key error:', error);
         return {
             statusCode: 500,
             headers,
@@ -60,3 +74,6 @@ exports.handler = async (event, context) => {
         };
     }
 };
+
+// Export keys for validate-key function to access
+exports.getGeneratedKeys = () => generatedKeys;
