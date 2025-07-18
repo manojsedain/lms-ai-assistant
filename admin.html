@@ -1222,7 +1222,302 @@ async function saveKeyToDatabase() {
         function formatTimestamp(timestamp) {
             return new Date(timestamp).toLocaleString();
         }
+// ===== ADMIN SETTINGS =====
+        let systemSettings = {
+            adminPassword: 'admin2025',
+            notificationEmail: '',
+            emailService: 'disabled',
+            paypalClientId: '',
+            paypalEnvironment: 'sandbox',
+            keyPrice: 29.99
+        };
 
+        let bulkGeneratedKeys = [];
+
+        function loadSystemSettings() {
+            const stored = localStorage.getItem('lms_ai_system_settings');
+            if (stored) {
+                systemSettings = { ...systemSettings, ...JSON.parse(stored) };
+            }
+            
+            // Update UI
+            document.getElementById('notificationEmail').value = systemSettings.notificationEmail;
+            document.getElementById('emailService').value = systemSettings.emailService;
+            document.getElementById('paypalClientId').value = systemSettings.paypalClientId;
+            document.getElementById('paypalEnvironment').value = systemSettings.paypalEnvironment;
+            document.getElementById('keyPrice').value = systemSettings.keyPrice;
+        }
+
+        function saveSystemSettings() {
+            localStorage.setItem('lms_ai_system_settings', JSON.stringify(systemSettings));
+        }
+
+        function changeAdminPassword() {
+            const newPassword = document.getElementById('newAdminPassword').value.trim();
+            
+            if (!newPassword) {
+                alert('❌ Please enter a new password');
+                return;
+            }
+            
+            if (newPassword.length < 6) {
+                alert('❌ Password must be at least 6 characters');
+                return;
+            }
+            
+            if (confirm(`🔑 Change admin password to: ${newPassword}?\n\nMake sure you remember this password!`)) {
+                systemSettings.adminPassword = newPassword;
+                saveSystemSettings();
+                
+                alert('✅ Admin password updated successfully!\n\nNew password: ' + newPassword);
+                document.getElementById('newAdminPassword').value = '';
+                
+                logActivity('admin_password_changed', 'Admin password updated');
+            }
+        }
+
+        function saveEmailSettings() {
+            systemSettings.notificationEmail = document.getElementById('notificationEmail').value.trim();
+            systemSettings.emailService = document.getElementById('emailService').value;
+            
+            saveSystemSettings();
+            alert('✅ Email settings saved successfully!');
+            
+            logActivity('email_settings_updated', `Email service: ${systemSettings.emailService}`);
+        }
+
+        function savePayPalSettings() {
+            systemSettings.paypalClientId = document.getElementById('paypalClientId').value.trim();
+            systemSettings.paypalEnvironment = document.getElementById('paypalEnvironment').value;
+            
+            saveSystemSettings();
+            alert('✅ PayPal settings saved successfully!');
+            
+            logActivity('paypal_settings_updated', `Environment: ${systemSettings.paypalEnvironment}`);
+        }
+
+        function savePricingSettings() {
+            const price = parseFloat(document.getElementById('keyPrice').value);
+            if (isNaN(price) || price < 0) {
+                alert('❌ Please enter a valid price');
+                return;
+            }
+            
+            systemSettings.keyPrice = price;
+            saveSystemSettings();
+            alert(`✅ Pricing updated: $${price.toFixed(2)} per key`);
+            
+            logActivity('pricing_updated', `Key price set to $${price.toFixed(2)}`);
+        }
+
+        // ===== BULK KEY GENERATION =====
+        function generateBulkKeys() {
+            const count = parseInt(document.getElementById('bulkCount').value);
+            const prefix = document.getElementById('bulkPrefix').value.trim();
+            const duration = parseInt(document.getElementById('bulkDuration').value);
+            const keyType = document.getElementById('bulkType').value;
+            const startNumber = parseInt(document.getElementById('bulkStartNumber').value);
+            const padding = parseInt(document.getElementById('bulkPadding').value);
+            
+            if (!count || count < 1 || count > 1000) {
+                alert('❌ Please enter a valid number of keys (1-1000)');
+                return;
+            }
+            
+            if (!prefix) {
+                alert('❌ Please enter a name prefix');
+                return;
+            }
+            
+            if (confirm(`📦 Generate ${count} keys?\n\nPrefix: ${prefix}\nType: ${keyType}\nThis will take a moment...`)) {
+                bulkGeneratedKeys = [];
+                const bulkList = document.getElementById('bulkKeysList');
+                bulkList.innerHTML = '<div style="text-align: center; padding: 20px;">⏳ Generating keys...</div>';
+                bulkList.classList.remove('hidden');
+                
+                setTimeout(() => {
+                    for (let i = 0; i < count; i++) {
+                        const number = startNumber + i;
+                        const paddedNumber = number.toString().padStart(padding, '0');
+                        const userName = `${prefix}${paddedNumber}`;
+                        
+                        // Generate key
+                        const namePrefix = userName.toUpperCase().replace(/[^A-Z]/g, '').substring(0, 4).padEnd(4, 'X');
+                        const year = new Date().getFullYear();
+                        const random = Math.random().toString(36).substring(2, 8).toUpperCase();
+                        const keyCode = `${namePrefix}-${year}-${random}`;
+                        
+                        // Calculate expiry
+                        let expiryDate;
+                        if (duration === 0) {
+                            expiryDate = "2099-12-31";
+                        } else {
+                            const expiry = new Date();
+                            expiry.setMonth(expiry.getMonth() + duration);
+                            expiryDate = expiry.toISOString().split('T')[0];
+                        }
+                        
+                        const encryptionKey = `${userName.toLowerCase().replace(/\s+/g, '-')}-secret-key-${year}`;
+                        
+                        const keyData = {
+                            keyCode: keyCode,
+                            userName: userName,
+                            expiryDate: expiryDate,
+                            encryptionKey: encryptionKey,
+                            keyType: keyType,
+                            createdAt: new Date().toISOString(),
+                            active: true,
+                            bulk: true
+                        };
+                        
+                        bulkGeneratedKeys.push(keyData);
+                        
+                        // Also add to main database
+                        keysDatabase[keyCode] = {
+                            name: userName,
+                            expiry: expiryDate,
+                            active: true,
+                            encryptionKey: encryptionKey,
+                            type: keyType,
+                            created: new Date().toISOString().split('T')[0],
+                            download_count: 0,
+                            bulk: true
+                        };
+                    }
+                    
+                    // Save to localStorage
+                    const localKeys = JSON.parse(localStorage.getItem('lms_ai_local_keys') || '{}');
+                    bulkGeneratedKeys.forEach(key => {
+                        localKeys[key.keyCode] = {
+                            name: key.userName,
+                            expiry: key.expiryDate,
+                            active: key.active,
+                            encryptionKey: key.encryptionKey,
+                            type: key.keyType,
+                            created: key.createdAt.split('T')[0],
+                            download_count: 0,
+                            bulk: true
+                        };
+                    });
+                    localStorage.setItem('lms_ai_local_keys', JSON.stringify(localKeys));
+                    
+                    displayBulkKeys();
+                    document.getElementById('exportBulkBtn').disabled = false;
+                    
+                    refreshKeyList();
+                    updateStatistics();
+                    
+                    alert(`✅ Generated ${count} bulk keys successfully!`);
+                    logActivity('bulk_keys_generated', `Generated ${count} ${keyType} keys with prefix ${prefix}`);
+                    
+                }, 500);
+            }
+        }
+
+        function displayBulkKeys() {
+            const bulkList = document.getElementById('bulkKeysList');
+            
+            if (bulkGeneratedKeys.length === 0) {
+                bulkList.classList.add('hidden');
+                return;
+            }
+            
+            bulkList.innerHTML = `
+                <div style="text-align: center; margin-bottom: 15px;">
+                    <strong>📦 ${bulkGeneratedKeys.length} Bulk Keys Generated</strong>
+                </div>
+                ${bulkGeneratedKeys.map((key, index) => `
+                    <div class="key-item" style="font-size: 12px;">
+                        <strong>${key.userName}</strong><br>
+                        <small><strong>Key:</strong> <code>${key.keyCode}</code></small><br>
+                        <small><strong>Expires:</strong> ${key.expiryDate} | <strong>Type:</strong> ${key.keyType}</small>
+                    </div>
+                `).join('')}
+            `;
+            
+            bulkList.classList.remove('hidden');
+        }
+
+        function exportBulkKeys() {
+            if (bulkGeneratedKeys.length === 0) {
+                alert('❌ No bulk keys to export. Generate some keys first.');
+                return;
+            }
+            
+            // Create CSV content
+            const headers = ['Username', 'Key Code', 'Expiry Date', 'Key Type', 'Encryption Key', 'Created Date'];
+            const csvContent = [
+                headers.join(','),
+                ...bulkGeneratedKeys.map(key => [
+                    key.userName,
+                    key.keyCode,
+                    key.expiryDate,
+                    key.keyType,
+                    key.encryptionKey,
+                    key.createdAt.split('T')[0]
+                ].join(','))
+            ].join('\n');
+            
+            // Download CSV
+            const blob = new Blob([csvContent], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `bulk-keys-${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+            
+            alert(`✅ Exported ${bulkGeneratedKeys.length} keys to CSV file!`);
+            logActivity('bulk_keys_exported', `Exported ${bulkGeneratedKeys.length} keys to CSV`);
+        }
+
+        function clearBulkKeys() {
+            if (bulkGeneratedKeys.length === 0) {
+                alert('❌ No bulk keys to clear.');
+                return;
+            }
+            
+            if (confirm(`🗑️ Clear ${bulkGeneratedKeys.length} bulk keys?\n\nThis will only clear the bulk view, not delete the keys from database.`)) {
+                bulkGeneratedKeys = [];
+                document.getElementById('bulkKeysList').classList.add('hidden');
+                document.getElementById('exportBulkBtn').disabled = true;
+                
+                alert('✅ Bulk keys view cleared!');
+            }
+        }
+
+        // Update the attemptLogin function to use dynamic password
+        const originalAttemptLogin = attemptLogin;
+        attemptLogin = function() {
+            const password = document.getElementById('loginPassword').value;
+            const errorDiv = document.getElementById('errorMessage');
+            
+            if (password === systemSettings.adminPassword) {
+                document.getElementById('loginContainer').style.display = 'none';
+                document.getElementById('adminContainer').style.display = 'block';
+                initializeAdmin();
+                logActivity('admin_login', 'Administrator logged in');
+            } else {
+                errorDiv.textContent = '❌ Invalid password! Access denied.';
+                errorDiv.classList.remove('hidden');
+                document.getElementById('loginPassword').value = '';
+                document.getElementById('loginPassword').style.borderColor = '#e74c3c';
+                
+                setTimeout(() => {
+                    errorDiv.classList.add('hidden');
+                    document.getElementById('loginPassword').style.borderColor = '#bdc3c7';
+                }, 3000);
+                
+                logActivity('admin_login_failed', 'Failed login attempt');
+            }
+        };
+
+        // Update initialization
+        const originalInitializeAdmin = initializeAdmin;
+        initializeAdmin = function() {
+            loadSystemSettings();
+            originalInitializeAdmin();
+        };
         // Initialize on load
         console.log('LMS AI Admin Panel loaded successfully!');
         console.log('Database integration: Enabled');
