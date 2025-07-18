@@ -1,7 +1,7 @@
 {
   "name": "lms-ai-assistant",
   "version": "1.0.0",
-  "description": "LMS AI Assistant with Key Management System",
+  "description": "LMS AI Assistant with Database",
   "main": "index.js",
   "dependencies": {
     "pg": "^8.11.3"
@@ -9,7 +9,7 @@
   "scripts": {
     "build": "echo 'Build complete'"
   },
-  "keywords": ["lms", "ai", "assistant", "userscript"],
-  "author": "Your Name",
-  "license": "MIT"
+  "engines": {
+    "node": ">=14.0.0"
+  }
 }
