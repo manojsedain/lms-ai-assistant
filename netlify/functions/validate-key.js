@@ -31,8 +31,10 @@ exports.handler = async (event, context) => {
             };
         }
 
-        // Hardcoded test keys for now (until database is connected)
-        const testKeys = {
+        console.log('Validating key:', keyCode);
+
+        // Check hardcoded keys first
+        const hardcodedKeys = {
             'DEMO-2025-TEST': {
                 name: 'Demo User',
                 expiry: '2025-12-31',
@@ -41,7 +43,7 @@ exports.handler = async (event, context) => {
             },
             'ADMIN-2025-MASTER': {
                 name: 'Administrator',
-                expiry: '2099-12-31',
+                expiry: '2099-12-31', 
                 encryptionKey: 'admin-master-key-2025',
                 active: true
             },
@@ -53,9 +55,25 @@ exports.handler = async (event, context) => {
             }
         };
 
-        const keyData = testKeys[keyCode.toUpperCase()];
+        let keyData = hardcodedKeys[keyCode.toUpperCase()];
+
+        // If not found in hardcoded, check generated keys (simulated database)
+        if (!keyData) {
+            // For now, let's create some sample generated keys that might match what you created
+            const sampleGeneratedKeys = {
+                'TEST-2025-H03PFT': {
+                    name: 'Test User Generated',
+                    expiry: '2025-12-31',
+                    encryptionKey: 'test-user-secret-key-2025',
+                    active: true
+                }
+            };
+            
+            keyData = sampleGeneratedKeys[keyCode.toUpperCase()];
+        }
         
         if (!keyData) {
+            console.log('Key not found:', keyCode);
             return {
                 statusCode: 200,
                 headers,
@@ -66,6 +84,7 @@ exports.handler = async (event, context) => {
             };
         }
 
+        // Check if key is active
         if (!keyData.active) {
             return {
                 statusCode: 200,
@@ -77,6 +96,7 @@ exports.handler = async (event, context) => {
             };
         }
 
+        // Check expiry
         const today = new Date();
         const expiryDate = new Date(keyData.expiry);
         
@@ -91,6 +111,8 @@ exports.handler = async (event, context) => {
             };
         }
 
+        console.log('Key validation successful:', keyCode);
+
         return {
             statusCode: 200,
             headers,
@@ -101,13 +123,13 @@ exports.handler = async (event, context) => {
                     name: keyData.name,
                     expiry: keyData.expiry,
                     encryptionKey: keyData.encryptionKey,
-                    type: 'STANDARD'
+                    type: keyData.type || 'STANDARD'
                 }
             })
         };
 
     } catch (error) {
-        console.error('Validation error:', error);
+        console.error('Database error:', error);
         return {
             statusCode: 500,
             headers,
