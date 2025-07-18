@@ -297,6 +297,125 @@
 <!-- Admin Panel (Hidden) -->
     <div id="adminContainer" class="admin-container">
         <h1>🔑 LMS AI Assistant - Admin Panel</h1>
+        <!-- Admin Settings -->
+        <div class="admin-section">
+            <h3>⚙️ System Settings</h3>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
+                <div>
+                    <h4>🔐 Security Settings</h4>
+                    <div class="form-group">
+                        <label for="newAdminPassword">New Admin Password:</label>
+                        <input type="password" id="newAdminPassword" placeholder="Enter new password">
+                    </div>
+                    <button onclick="changeAdminPassword()" class="btn-warning">🔑 Update Password</button>
+                    
+                    <h4 style="margin-top: 20px;">📧 Email Settings</h4>
+                    <div class="form-group">
+                        <label for="notificationEmail">Notification Email:</label>
+                        <input type="email" id="notificationEmail" placeholder="admin@yoursite.com">
+                    </div>
+                    <div class="form-group">
+                        <label for="emailService">Email Service:</label>
+                        <select id="emailService">
+                            <option value="disabled">Disabled</option>
+                            <option value="emailjs">EmailJS (Free)</option>
+                            <option value="netlify">Netlify Forms</option>
+                        </select>
+                    </div>
+                    <button onclick="saveEmailSettings()" class="btn-success">💾 Save Email Settings</button>
+                </div>
+                
+                <div>
+                    <h4>💳 Payment Settings</h4>
+                    <div class="form-group">
+                        <label for="paypalClientId">PayPal Client ID:</label>
+                        <input type="text" id="paypalClientId" placeholder="Your PayPal client ID">
+                    </div>
+                    <div class="form-group">
+                        <label for="paypalEnvironment">PayPal Environment:</label>
+                        <select id="paypalEnvironment">
+                            <option value="sandbox">Sandbox (Testing)</option>
+                            <option value="production">Production (Live)</option>
+                        </select>
+                    </div>
+                    <button onclick="savePayPalSettings()" class="btn-success">💾 Save PayPal Settings</button>
+                    
+                    <h4 style="margin-top: 20px;">💰 Pricing</h4>
+                    <div class="form-group">
+                        <label for="keyPrice">Price per Key (USD):</label>
+                        <input type="number" id="keyPrice" placeholder="29.99" step="0.01">
+                    </div>
+                    <button onclick="savePricingSettings()" class="btn-success">💾 Save Pricing</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bulk Key Generation -->
+        <div class="admin-section">
+            <h3>📦 Bulk Key Generation</h3>
+            <p>Generate multiple keys at once for bulk distribution.</p>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px;">
+                <div>
+                    <div class="form-group">
+                        <label for="bulkCount">Number of Keys:</label>
+                        <input type="number" id="bulkCount" min="1" max="1000" value="10" placeholder="10">
+                    </div>
+                    <div class="form-group">
+                        <label for="bulkPrefix">Name Prefix:</label>
+                        <input type="text" id="bulkPrefix" value="User" placeholder="User, Student, Trial">
+                    </div>
+                </div>
+                <div>
+                    <div class="form-group">
+                        <label for="bulkDuration">Duration (All Keys):</label>
+                        <select id="bulkDuration">
+                            <option value="1">1 Month</option>
+                            <option value="3">3 Months</option>
+                            <option value="6">6 Months</option>
+                            <option value="12" selected>1 Year</option>
+                            <option value="24">2 Years</option>
+                            <option value="0">Permanent</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="bulkType">Key Type (All Keys):</label>
+                        <select id="bulkType">
+                            <option value="STANDARD">Standard</option>
+                            <option value="PREMIUM">Premium</option>
+                            <option value="STUDENT">Student</option>
+                            <option value="TRIAL">Trial</option>
+                            <option value="BULK">Bulk</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <div class="form-group">
+                        <label for="bulkStartNumber">Start Number:</label>
+                        <input type="number" id="bulkStartNumber" value="1" min="1" placeholder="1">
+                    </div>
+                    <div class="form-group">
+                        <label for="bulkPadding">Number Padding:</label>
+                        <select id="bulkPadding">
+                            <option value="1">1 (User1, User2)</option>
+                            <option value="2">2 (User01, User02)</option>
+                            <option value="3" selected>3 (User001, User002)</option>
+                            <option value="4">4 (User0001, User0002)</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            <div style="margin-top: 20px;">
+                <button onclick="generateBulkKeys()" class="btn-success">📦 Generate Bulk Keys</button>
+                <button onclick="exportBulkKeys()" class="btn-warning" id="exportBulkBtn" disabled>📤 Export as CSV</button>
+                <button onclick="clearBulkKeys()" class="btn-danger">🗑️ Clear Bulk</button>
+            </div>
+            
+            <div id="bulkKeysList" class="key-list hidden" style="max-height: 300px;">
+                <!-- Bulk keys will appear here -->
+            </div>
+        </div>
         
         <!-- Header Controls -->
         <div style="text-align: right; margin-bottom: 20px; padding: 15px; background: #ecf0f1; border-radius: 8px;">
