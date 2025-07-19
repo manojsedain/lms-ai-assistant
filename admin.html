@@ -274,6 +274,154 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+        /* ===== MOBILE RESPONSIVE DESIGN ===== */
+        @media (max-width: 768px) {
+            body {
+                margin: 10px;
+                padding: 10px;
+            }
+            
+            .admin-container {
+                padding: 15px;
+                margin: 0;
+            }
+            
+            .login-container {
+                margin: 50px auto;
+                padding: 20px;
+                max-width: 300px;
+            }
+            
+            h1 {
+                font-size: 24px;
+                margin-bottom: 20px;
+            }
+            
+            .admin-section {
+                padding: 15px;
+                margin-bottom: 20px;
+            }
+            
+            .stats {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 10px;
+            }
+            
+            .stat-card {
+                padding: 15px;
+            }
+            
+            .stat-number {
+                font-size: 24px;
+            }
+            
+            /* Make form inputs stack on mobile */
+            .admin-section > div[style*="grid-template-columns"] {
+                display: block !important;
+            }
+            
+            .admin-section > div[style*="grid-template-columns"] > div {
+                margin-bottom: 20px;
+            }
+            
+            /* Responsive key items */
+            .key-item {
+                padding: 10px;
+                font-size: 12px;
+            }
+            
+            .key-item div[style*="margin-right"] {
+                margin-right: 10px !important;
+            }
+            
+            .copy-btn, .toggle-btn, .delete-btn {
+                position: static !important;
+                margin: 5px 2px !important;
+                padding: 4px 8px !important;
+                font-size: 10px !important;
+            }
+            
+            /* Mobile-friendly buttons */
+            button {
+                margin: 5px 2px;
+                padding: 10px 15px;
+                font-size: 12px;
+            }
+            
+            /* Responsive bulk generation */
+            .admin-section div[style*="grid-template-columns: 1fr 1fr 1fr"] {
+                display: block !important;
+            }
+            
+            /* Mobile textarea */
+            textarea {
+                height: 150px !important;
+                font-size: 12px;
+            }
+            
+            /* Hide less important elements on mobile */
+            .stat-label {
+                font-size: 12px;
+            }
+            
+            /* Mobile navigation */
+            .admin-section h3 {
+                font-size: 16px;
+                padding-bottom: 5px;
+            }
+        }
+
+        /* Tablet responsive */
+        @media (max-width: 1024px) and (min-width: 769px) {
+            .stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .admin-section > div[style*="grid-template-columns: 1fr 1fr"] {
+                display: block !important;
+            }
+        }
+
+        /* Mobile-first improvements */
+        .mobile-hidden {
+            display: block;
+        }
+        
+        @media (max-width: 768px) {
+            .mobile-hidden {
+                display: none;
+            }
+        }
+
+        /* Touch-friendly buttons */
+        @media (max-width: 768px) {
+            button:hover {
+                transform: none; /* Disable hover effects on mobile */
+            }
+            
+            .key-item:hover {
+                transform: none;
+            }
+        }
+
+        /* PWA Support */
+        .pwa-install {
+            display: none;
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #3498db;
+            color: white;
+            padding: 15px;
+            border-radius: 50px;
+            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.3);
+            cursor: pointer;
+            z-index: 1000;
+        }
+        
+        .pwa-install.show {
+            display: block;
+        }
     </style>
 </head>
 <body>
@@ -305,7 +453,46 @@
             <button onclick="testDatabaseConnection()" class="btn-secondary">🔍 Test DB</button>
             <button onclick="logout()" class="btn-danger">🚪 Logout</button>
         </div>
+        <!-- Header Controls -->
+        <div style="text-align: right; margin-bottom: 20px; padding: 15px; background: #ecf0f1; border-radius: 8px;">
+            <span style="color: #7f8c8d; margin-right: 20px;">👤 Administrator</span>
+            <button onclick="testDatabaseConnection()" class="btn-secondary">🔍 Test DB</button>
+            <button onclick="logout()" class="btn-danger">🚪 Logout</button>
+        </div>
+
+        <!-- Mobile App Features -->
+        <div class="admin-section" style="background: linear-gradient(135deg, #3498db, #2980b9); color: white;">
+            <h3 style="color: white; border-bottom: 2px solid rgba(255,255,255,0.3);">📱 Mobile Admin Features</h3>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                <div style="text-align: center;">
+                    <h4 style="margin: 0; color: white;">📊 Quick Stats</h4>
+                    <p style="margin: 5px 0; font-size: 14px; opacity: 0.9;">View key statistics at a glance</p>
+                    <button onclick="showQuickStats()" class="btn-secondary" style="background: rgba(255,255,255,0.2);">View Stats</button>
+                </div>
+                <div style="text-align: center;">
+                    <h4 style="margin: 0; color: white;">🔑 Quick Generate</h4>
+                    <p style="margin: 5px 0; font-size: 14px; opacity: 0.9;">Generate key with one tap</p>
+                    <button onclick="quickGenerateKey()" class="btn-secondary" style="background: rgba(255,255,255,0.2);">Quick Generate</button>
+                </div>
+                <div style="text-align: center;">
+                    <h4 style="margin: 0; color: white;">📧 Quick Test</h4>
+                    <p style="margin: 5px 0; font-size: 14px; opacity: 0.9;">Test email notifications</p>
+                    <button onclick="quickEmailTest()" class="btn-secondary" style="background: rgba(255,255,255,0.2);">Test Email</button>
+                </div>
+            </div>
+            
+            <!-- PWA Install Prompt -->
+            <div id="pwaPrompt" class="mobile-hidden" style="margin-top: 20px; padding: 15px; background: rgba(255,255,255,0.1); border-radius: 8px; text-align: center;">
+                <h4 style="margin: 0 0 10px 0; color: white;">📲 Install as App</h4>
+                <p style="margin: 0 0 15px 0; font-size: 14px; opacity: 0.9;">Add to home screen for quick access</p>
+                <button onclick="installPWA()" style="background: rgba(255,255,255,0.2); color: white;">📲 Install App</button>
+            </div>
+        </div>
         
+        <!-- Database Connection Status -->
+        <div class="database-status" id="dbStatus">
+            <!-- your existing database status content -->
+        </div>
         <!-- Database Connection Status -->
         <div class="database-status" id="dbStatus">
             <strong>🗄️ Database Status:</strong> 
@@ -412,7 +599,28 @@
                         <input type="password" id="newAdminPassword" placeholder="Enter new password">
                     </div>
                     <button onclick="changeAdminPassword()" class="btn-warning">🔑 Update Password</button>
-                    
+                    <h4 style="margin-top: 20px;">🔐 Two-Factor Authentication</h4>
+                    <div class="form-group">
+                        <label for="twoFactorEnabled">Enable 2FA:</label>
+                        <select id="twoFactorEnabled" onchange="toggle2FA()">
+                            <option value="false">Disabled</option>
+                            <option value="email">Email-based 2FA</option>
+                            <option value="backup">Backup Codes</option>
+                        </select>
+                    </div>
+                    <div id="twoFactorSection" class="hidden">
+                        <div class="form-group">
+                            <label for="twoFactorEmail">2FA Email (can be different from notification email):</label>
+                            <input type="email" id="twoFactorEmail" placeholder="security@yoursite.com">
+                        </div>
+                        <div class="form-group">
+                            <label>Backup Codes (save these safely):</label>
+                            <textarea id="backupCodes" readonly style="height: 100px; background: #f8f9fa;"></textarea>
+                        </div>
+                        <button onclick="generateBackupCodes()" class="btn-warning">🔄 Generate New Codes</button>
+                        <button onclick="test2FA()" class="btn-secondary">🧪 Test 2FA</button>
+                    </div>
+                    <button onclick="save2FASettings()" class="btn-success">💾 Save 2FA Settings</button>
 <h4 style="margin-top: 20px;">📧 Email Settings</h4>
                     <div class="form-group">
                         <label for="notificationEmail">Notification Email:</label>
@@ -542,6 +750,79 @@
             
             <div id="bulkKeysList" class="key-list hidden" style="max-height: 300px;">
                 <!-- Bulk keys will appear here -->
+            </div>
+        </div>
+        <!-- Key Renewal System -->
+        <div class="admin-section">
+            <h3>🔄 Key Renewal System</h3>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
+                <div>
+                    <h4>🔍 Find Key to Renew</h4>
+                    <div class="form-group">
+                        <label for="renewalKeyCode">Key Code to Renew:</label>
+                        <input type="text" id="renewalKeyCode" placeholder="Enter key code">
+                        <button onclick="searchKeyForRenewal()" class="btn-secondary" style="margin-top: 5px;">🔍 Search Key</button>
+                    </div>
+                    
+                    <div id="renewalKeyInfo" class="hidden" style="background: #e3f2fd; padding: 15px; border-radius: 8px; margin-top: 15px;">
+                        <h5 style="margin-top: 0;">Key Information:</h5>
+                        <p><strong>User:</strong> <span id="renewalUserName"></span></p>
+                        <p><strong>Current Expiry:</strong> <span id="renewalCurrentExpiry"></span></p>
+                        <p><strong>Status:</strong> <span id="renewalStatus"></span></p>
+                        <p><strong>Type:</strong> <span id="renewalKeyType"></span></p>
+                    </div>
+                </div>
+                
+                <div>
+                    <h4>⏰ Renewal Options</h4>
+                    <div class="form-group">
+                        <label for="renewalDuration">Extend Duration:</label>
+                        <select id="renewalDuration">
+                            <option value="1">+1 Month</option>
+                            <option value="3">+3 Months</option>
+                            <option value="6">+6 Months</option>
+                            <option value="12" selected>+1 Year</option>
+                            <option value="24">+2 Years</option>
+                            <option value="custom">Custom Date</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group" id="customDateField" style="display: none;">
+                        <label for="customExpiryDate">Custom Expiry Date:</label>
+                        <input type="date" id="customExpiryDate">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="renewalReason">Renewal Reason:</label>
+                        <select id="renewalReason">
+                            <option value="payment">Payment Received</option>
+                            <option value="extension">Courtesy Extension</option>
+                            <option value="migration">License Migration</option>
+                            <option value="upgrade">Account Upgrade</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="renewalNotes">Renewal Notes (Optional):</label>
+                        <textarea id="renewalNotes" placeholder="Add notes about this renewal..." style="height: 80px;"></textarea>
+                    </div>
+                    
+                    <button onclick="processKeyRenewal()" id="renewBtn" class="btn-success" disabled>🔄 Process Renewal</button>
+                    <button onclick="clearRenewalForm()" class="btn-secondary">🗑️ Clear Form</button>
+                </div>
+            </div>
+            
+            <!-- Renewal History -->
+            <div style="margin-top: 30px;">
+                <h4>📜 Recent Renewals</h4>
+                <div id="renewalHistory" class="key-list" style="max-height: 200px;">
+                    <div style="text-align: center; color: #7f8c8d; padding: 20px;">
+                        <p>📊 Renewal history will appear here...</p>
+                    </div>
+                </div>
+                <button onclick="loadRenewalHistory()" class="btn-secondary">🔄 Refresh History</button>
+                <button onclick="exportRenewalHistory()" class="btn-warning">📤 Export History</button>
             </div>
         </div>
 <!-- Key Management -->
@@ -2150,6 +2431,437 @@ function savePayPalSettings() {
         console.log('LMS AI Admin Panel v2.0.0 loaded successfully!');
         console.log('Features: Key Management, Bulk Generation, Email Notifications, Analytics');
         console.log('Keyboard shortcuts: Ctrl+G (Generate), Ctrl+S (Save), Esc (Clear)');
+    // ===== MOBILE APP FEATURES =====
+        function showQuickStats() {
+            const stats = {
+                total: document.getElementById('totalKeys').textContent,
+                active: document.getElementById('activeKeys').textContent,
+                expired: document.getElementById('expiredKeys').textContent,
+                downloads: document.getElementById('totalDownloads').textContent
+            };
+            
+            alert(`📊 Quick Stats:\n\n🔑 Total Keys: ${stats.total}\n✅ Active: ${stats.active}\n❌ Expired: ${stats.expired}\n📥 Downloads: ${stats.downloads}`);
+        }
+
+        function quickGenerateKey() {
+            const userName = prompt('👤 Enter user name:');
+            if (!userName) return;
+            
+            const keyType = prompt('🏷️ Enter key type (STANDARD/PREMIUM/TEST):', 'STANDARD');
+            if (!keyType) return;
+            
+            // Auto-fill form and generate
+            document.getElementById('userName').value = userName;
+            document.getElementById('keyType').value = keyType.toUpperCase();
+            generateNewKey();
+            
+            if (currentGeneratedKey) {
+                setTimeout(() => {
+                    saveKeyToDatabase();
+                }, 1000);
+            }
+        }
+
+        function quickEmailTest() {
+            const email = systemSettings.notificationEmail || prompt('📧 Enter email to test:');
+            if (!email) return;
+            
+            const originalEmail = systemSettings.notificationEmail;
+            systemSettings.notificationEmail = email;
+            
+            sendEmailNotification('Quick Mobile Test', {
+                message: 'This is a quick test from the mobile admin interface!'
+            }).then(() => {
+                alert('✅ Quick test sent to: ' + email);
+            }).catch(error => {
+                alert('❌ Test failed: ' + error.message);
+            }).finally(() => {
+                systemSettings.notificationEmail = originalEmail;
+            });
+        }
+
+        // PWA Installation
+        let deferredPrompt;
+        
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            document.getElementById('pwaPrompt').style.display = 'block';
+        });
+
+        function installPWA() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        console.log('PWA installed');
+                        document.getElementById('pwaPrompt').style.display = 'none';
+                    }
+                    deferredPrompt = null;
+                });
+            }
+        }
+
+        // ===== TWO-FACTOR AUTHENTICATION =====
+        function toggle2FA() {
+            const enabled = document.getElementById('twoFactorEnabled').value;
+            const section = document.getElementById('twoFactorSection');
+            
+            if (enabled !== 'false') {
+                section.classList.remove('hidden');
+                if (enabled === 'backup') {
+                    generateBackupCodes();
+                }
+            } else {
+                section.classList.add('hidden');
+            }
+        }
+
+        function generateBackupCodes() {
+            const codes = [];
+            for (let i = 0; i < 10; i++) {
+                const code = Math.random().toString(36).substring(2, 8).toUpperCase();
+                codes.push(`${i + 1}. ${code}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`);
+            }
+            
+            document.getElementById('backupCodes').value = codes.join('\n');
+            
+            // Store codes (in real app, these should be hashed)
+            systemSettings.backupCodes = codes;
+            saveSystemSettings();
+            
+            alert('🔐 New backup codes generated!\n\nSave these codes safely. Each can only be used once.');
+        }
+
+        function save2FASettings() {
+            systemSettings.twoFactorEnabled = document.getElementById('twoFactorEnabled').value;
+            systemSettings.twoFactorEmail = document.getElementById('twoFactorEmail').value.trim();
+            
+            saveSystemSettings();
+            alert('✅ 2FA settings saved successfully!');
+            
+            logActivity('2fa_settings_updated', `2FA enabled: ${systemSettings.twoFactorEnabled}`);
+        }
+
+        async function test2FA() {
+            if (systemSettings.twoFactorEnabled === 'false') {
+                alert('❌ 2FA is not enabled');
+                return;
+            }
+            
+            if (systemSettings.twoFactorEnabled === 'email') {
+                const code = Math.random().toString(36).substring(2, 8).toUpperCase();
+                
+                try {
+                    await sendEmailNotification('2FA Test Code', {
+                        message: `Your 2FA test code is: ${code}\n\nThis code expires in 5 minutes.`,
+                        code: code
+                    });
+                    
+                    const userCode = prompt('📧 2FA code sent to your email.\n\nEnter the code:');
+                    if (userCode === code) {
+                        alert('✅ 2FA test successful!');
+                    } else {
+                        alert('❌ Invalid code');
+                    }
+                } catch (error) {
+                    alert('❌ 2FA email test failed: ' + error.message);
+                }
+            } else if (systemSettings.twoFactorEnabled === 'backup') {
+                const userCode = prompt('🔐 Enter one of your backup codes:');
+                const codes = systemSettings.backupCodes || [];
+                
+                if (codes.some(code => code.includes(userCode))) {
+                    alert('✅ Backup code is valid!');
+                } else {
+                    alert('❌ Invalid backup code');
+                }
+            }
+        }
+
+        // Enhanced login with 2FA
+        const originalAttemptLogin = attemptLogin;
+        attemptLogin = async function() {
+            const password = document.getElementById('loginPassword').value;
+            const currentPassword = getCurrentAdminPassword();
+            
+            if (password !== currentPassword) {
+                document.getElementById('errorMessage').textContent = '❌ Invalid password!';
+                document.getElementById('errorMessage').classList.remove('hidden');
+                return;
+            }
+            
+            // Check if 2FA is enabled
+            const stored = localStorage.getItem('lms_ai_system_settings');
+            let require2FA = false;
+            
+            if (stored) {
+                try {
+                    const settings = JSON.parse(stored);
+                    require2FA = settings.twoFactorEnabled !== 'false';
+                } catch (e) {
+                    // Ignore
+                }
+            }
+            
+            if (require2FA) {
+                const success = await prompt2FA();
+                if (!success) return;
+            }
+            
+            // Proceed with normal login
+            document.getElementById('loginContainer').style.display = 'none';
+            document.getElementById('adminContainer').style.display = 'block';
+            initializeAdmin();
+            logActivity('admin_login', 'Administrator logged in' + (require2FA ? ' with 2FA' : ''));
+        };
+
+        async function prompt2FA() {
+            const settings = JSON.parse(localStorage.getItem('lms_ai_system_settings') || '{}');
+            
+            if (settings.twoFactorEnabled === 'email') {
+                const code = Math.random().toString(36).substring(2, 8).toUpperCase();
+                
+                try {
+                    await sendEmailNotification('2FA Login Code', {
+                        message: `Your login verification code is: ${code}\n\nThis code expires in 5 minutes.\n\nIf you didn't request this, please change your password immediately.`,
+                        code: code
+                    });
+                    
+                    const userCode = prompt('🔐 Two-Factor Authentication Required\n\nA verification code has been sent to your email.\nEnter the 6-digit code:');
+                    
+                    if (userCode === code) {
+                        return true;
+                    } else {
+                        alert('❌ Invalid verification code');
+                        return false;
+                    }
+                } catch (error) {
+                    alert('❌ Failed to send 2FA code. Contact support.');
+                    return false;
+                }
+            } else if (settings.twoFactorEnabled === 'backup') {
+                const userCode = prompt('🔐 Two-Factor Authentication Required\n\nEnter one of your backup codes:');
+                const codes = settings.backupCodes || [];
+                
+                if (codes.some(code => code.includes(userCode.toUpperCase()))) {
+                    // Remove used backup code
+                    settings.backupCodes = codes.filter(code => !code.includes(userCode.toUpperCase()));
+                    localStorage.setItem('lms_ai_system_settings', JSON.stringify(settings));
+                    
+                    if (settings.backupCodes.length === 0) {
+                        alert('⚠️ Warning: You have used your last backup code!\n\nPlease generate new codes in the 2FA settings.');
+                    }
+                    
+                    return true;
+                } else {
+                    alert('❌ Invalid backup code');
+                    return false;
+                }
+            }
+            
+            return true;
+        }
+
+        // ===== KEY RENEWAL SYSTEM =====
+        let renewalHistory = [];
+
+        function searchKeyForRenewal() {
+            const keyCode = document.getElementById('renewalKeyCode').value.trim().toUpperCase();
+            if (!keyCode) {
+                alert('❌ Please enter a key code');
+                return;
+            }
+            
+            const localKeys = JSON.parse(localStorage.getItem('lms_ai_local_keys') || '{}');
+            const keyData = localKeys[keyCode];
+            
+            if (!keyData) {
+                alert('❌ Key not found');
+                document.getElementById('renewalKeyInfo').classList.add('hidden');
+                document.getElementById('renewBtn').disabled = true;
+                return;
+            }
+            
+            // Display key information
+            document.getElementById('renewalUserName').textContent = keyData.name;
+            document.getElementById('renewalCurrentExpiry').textContent = keyData.expiry;
+            document.getElementById('renewalKeyType').textContent = keyData.type || 'STANDARD';
+            
+            const now = new Date();
+            const expiry = new Date(keyData.expiry);
+            const isExpired = now > expiry;
+            
+            document.getElementById('renewalStatus').textContent = keyData.active ? 
+                (isExpired ? '🔴 Expired' : '🟢 Active') : '🟡 Inactive';
+            
+            document.getElementById('renewalKeyInfo').classList.remove('hidden');
+            document.getElementById('renewBtn').disabled = false;
+        }
+
+        function processKeyRenewal() {
+            const keyCode = document.getElementById('renewalKeyCode').value.trim().toUpperCase();
+            const duration = document.getElementById('renewalDuration').value;
+            const reason = document.getElementById('renewalReason').value;
+            const notes = document.getElementById('renewalNotes').value.trim();
+            
+            const localKeys = JSON.parse(localStorage.getItem('lms_ai_local_keys') || '{}');
+            const keyData = localKeys[keyCode];
+            
+            if (!keyData) {
+                alert('❌ Key not found');
+                return;
+            }
+            
+            let newExpiry;
+            if (duration === 'custom') {
+                const customDate = document.getElementById('customExpiryDate').value;
+                if (!customDate) {
+                    alert('❌ Please select a custom expiry date');
+                    return;
+                }
+                newExpiry = customDate;
+            } else {
+                const currentExpiry = new Date(keyData.expiry);
+                const extensionMonths = parseInt(duration);
+                currentExpiry.setMonth(currentExpiry.getMonth() + extensionMonths);
+                newExpiry = currentExpiry.toISOString().split('T')[0];
+            }
+            
+            const oldExpiry = keyData.expiry;
+            
+            // Update key
+            keyData.expiry = newExpiry;
+            keyData.active = true; // Reactivate if needed
+            localKeys[keyCode] = keyData;
+            localStorage.setItem('lms_ai_local_keys', JSON.stringify(localKeys));
+            
+            // Update main database
+            if (keysDatabase[keyCode]) {
+                keysDatabase[keyCode].expiry = newExpiry;
+                keysDatabase[keyCode].active = true;
+            }
+            
+            // Record renewal
+            const renewal = {
+                keyCode: keyCode,
+                userName: keyData.name,
+                oldExpiry: oldExpiry,
+                newExpiry: newExpiry,
+                reason: reason,
+                notes: notes,
+                processedBy: 'Administrator',
+                processedAt: new Date().toISOString(),
+                duration: duration === 'custom' ? 'Custom' : `+${duration} months`
+            };
+            
+            renewalHistory.unshift(renewal);
+            localStorage.setItem('lms_ai_renewal_history', JSON.stringify(renewalHistory));
+            
+            // Send notification
+            sendEmailNotification('Key Renewed', {
+                keyCode: keyCode,
+                userName: keyData.name,
+                oldExpiry: oldExpiry,
+                newExpiry: newExpiry,
+                reason: reason
+            });
+            
+            alert(`✅ Key renewed successfully!\n\nUser: ${keyData.name}\nOld Expiry: ${oldExpiry}\nNew Expiry: ${newExpiry}`);
+            
+            logActivity('key_renewed', `Key ${keyCode} renewed from ${oldExpiry} to ${newExpiry} (${reason})`);
+            
+            // Refresh displays
+            refreshKeyList();
+            updateStatistics();
+            loadRenewalHistory();
+            clearRenewalForm();
+        }
+
+        function clearRenewalForm() {
+            document.getElementById('renewalKeyCode').value = '';
+            document.getElementById('renewalNotes').value = '';
+            document.getElementById('renewalKeyInfo').classList.add('hidden');
+            document.getElementById('renewBtn').disabled = true;
+        }
+
+        function loadRenewalHistory() {
+            const stored = localStorage.getItem('lms_ai_renewal_history');
+            if (stored) {
+                renewalHistory = JSON.parse(stored);
+            }
+            
+            const historyDiv = document.getElementById('renewalHistory');
+            
+            if (renewalHistory.length === 0) {
+                historyDiv.innerHTML = '<div style="text-align: center; color: #7f8c8d; padding: 20px;"><p>📊 No renewals yet.</p></div>';
+                return;
+            }
+            
+            historyDiv.innerHTML = renewalHistory.slice(0, 10).map(renewal => `
+                <div class="key-item" style="font-size: 12px; border-left-color: #27ae60;">
+                    <strong>${renewal.userName} (${renewal.keyCode})</strong><br>
+                    <small><strong>Extended:</strong> ${renewal.oldExpiry} → ${renewal.newExpiry}</small><br>
+                    <small><strong>Reason:</strong> ${renewal.reason} | <strong>Duration:</strong> ${renewal.duration}</small><br>
+                    <small><strong>Processed:</strong> ${new Date(renewal.processedAt).toLocaleString()}</small>
+                    ${renewal.notes ? `<br><small><strong>Notes:</strong> ${renewal.notes}</small>` : ''}
+                </div>
+            `).join('');
+        }
+
+        function exportRenewalHistory() {
+            if (renewalHistory.length === 0) {
+                alert('❌ No renewal history to export');
+                return;
+            }
+            
+            const headers = ['Key Code', 'User Name', 'Old Expiry', 'New Expiry', 'Reason', 'Duration', 'Notes', 'Processed At', 'Processed By'];
+            const csvContent = [
+                headers.join(','),
+                ...renewalHistory.map(renewal => [
+                    renewal.keyCode,
+                    renewal.userName,
+                    renewal.oldExpiry,
+                    renewal.newExpiry,
+                    renewal.reason,
+                    renewal.duration,
+                    renewal.notes || '',
+                    renewal.processedAt,
+                    renewal.processedBy
+                ].join(','))
+            ].join('\n');
+            
+            const blob = new Blob([csvContent], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `renewal-history-${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+            
+            alert(`✅ Exported ${renewalHistory.length} renewal records!`);
+        }
+
+        // Show/hide custom date field
+        document.addEventListener('DOMContentLoaded', function() {
+            if (document.getElementById('renewalDuration')) {
+                document.getElementById('renewalDuration').addEventListener('change', function() {
+                    const customField = document.getElementById('customDateField');
+                    if (this.value === 'custom') {
+                        customField.style.display = 'block';
+                    } else {
+                        customField.style.display = 'none';
+                    }
+                });
+            }
+        });
+
+        // Load renewal history on init
+        const originalInitializeAdmin = initializeAdmin;
+        initializeAdmin = function() {
+            originalInitializeAdmin();
+            loadRenewalHistory();
+        };
     </script>
 </body>
 </html>
