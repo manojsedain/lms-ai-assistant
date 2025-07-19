@@ -137,10 +137,8 @@
         // ===== SAFE ENCODING FUNCTIONS =====
         function safeBase64Encode(str) {
             try {
-                // First try native btoa
                 return btoa(str);
             } catch (error) {
-                // Fallback for Unicode characters
                 return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g,
                     function toSolidBytes(match, p1) {
                         return String.fromCharCode('0x' + p1);
@@ -158,13 +156,12 @@
                         return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
                     }).join(''));
                 } catch (e) {
-                    return str; // Return original if all else fails
+                    return str;
                 }
             }
         }
         
         function generateSafeKey(components) {
-            // Create a safe key without Unicode issues
             const cleanComponents = components.map(comp => 
                 comp.replace(/[^\w\-\.]/g, '').toLowerCase()
             );
@@ -175,11 +172,12 @@
             for (let i = 0; i < keyString.length; i++) {
                 const char = keyString.charCodeAt(i);
                 hash = ((hash << 5) - hash) + char;
-                hash = hash & hash; // Convert to 32-bit integer
+                hash = hash & hash;
             }
             
             return Math.abs(hash).toString(36).padStart(8, '0').substring(0, 32);
         }
+
         // ===== ENCRYPTION FUNCTIONS =====
         function simpleEncrypt(text, key) {
             try {
@@ -218,135 +216,131 @@
                 return null;
             }
         }
-// ===== DATABASE-POWERED KEY VALIDATION =====
-async function validateProductKey(key) {
-    try {
-        console.log('[LMS AI] Validating key with database:', key);
-        
-        // Try database first - FIXED TO MATCH ADMIN PANEL
-        const response = await fetch('/.netlify/functions/validate-key', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ 
-                licenseKey: key,  // ← CHANGED from 'keyCode' to 'licenseKey'
-                action: 'validate'
-            })
-        });
-        
-        if (response.ok) {
-            const result = await response.json();
-            console.log('[LMS AI] Database validation result:', result);
+
+        // ===== DATABASE-POWERED KEY VALIDATION =====
+        async function validateProductKey(key) {
+            try {
+                console.log('[LMS AI] Validating key with database:', key);
+                
+                const response = await fetch('/.netlify/functions/validate-key', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ 
+                        licenseKey: key,
+                        action: 'validate'
+                    })
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    console.log('[LMS AI] Database validation result:', result);
+                    
+                    if (result.valid && result.user) {
+                        return {
+                            valid: true,
+                            message: "Valid key! Preparing your personalized script...",
+                            userData: {
+                                name: result.user.name,
+                                email: result.user.email,
+                                expiry: result.user.expiry,
+                                type: result.user.type || 'STANDARD',
+                                active: result.user.active
+                            }
+                        };
+                    } else {
+                        return {
+                            valid: false,
+                            message: result.message || "Invalid license key"
+                        };
+                    }
+                }
+                
+                throw new Error('Database unavailable');
+            } catch (error) {
+                console.warn('[LMS AI] Database validation failed, using fallback:', error);
+                return validateKeyFallback(key);
+            }
+        }
+
+        function validateKeyFallback(key) {
+            console.log('[LMS AI] Fallback validation for key:', key);
             
-            // Make sure the response format matches what you expect
-            if (result.valid && result.user) {
+            // Pattern-based validation for LMS-AI keys
+            const lmsPattern = /^(LMS-AI-2025-[A-Z0-9]{8}|TEST-2025-[A-Z0-9]{6})$/;
+            if (lmsPattern.test(key)) {
+                console.log('[LMS AI] Valid LMS-AI pattern detected');
                 return {
                     valid: true,
-                    message: "Valid key! Preparing your personalized script...",
+                    message: "Valid LMS AI key! Preparing your personalized script...",
                     userData: {
-                        name: result.user.name,
-                        email: result.user.email,
-                        expiry: result.user.expiry,
-                        type: result.user.type || 'STANDARD',
-                        active: result.user.active
+                        name: "LMS AI User",
+                        email: "user@example.com",
+                        type: "STANDARD",
+                        expiry: "2025-12-31",
+                        active: true,
+                        encryptionKey: "lms-ai-key-2025"
                     }
                 };
-            } else {
-                return {
-                    valid: false,
-                    message: result.message || "Invalid license key"
-                };
             }
+            
+            // Existing fallback keys
+            const fallbackKeys = {
+                "DEMO-2025-TEST": {
+                    name: "Demo User",
+                    email: "demo@example.com",
+                    type: "DEMO",
+                    expiry: "2025-12-31",
+                    active: true,
+                    encryptionKey: "demo-secret-key-2025"
+                },
+                "ADMIN-2025-MASTER": {
+                    name: "Administrator",
+                    email: "admin@example.com", 
+                    type: "ADMIN",
+                    expiry: "2099-12-31",
+                    active: true,
+                    encryptionKey: "admin-master-key-2025"
+                },
+                "JOHN-2025-ABC123": {
+                    name: "John Smith",
+                    email: "john@example.com",
+                    type: "STANDARD",
+                    expiry: "2025-12-31",
+                    active: true,
+                    encryptionKey: "john-secret-key-2025"
+                }
+            };
+            
+            if (!key || key.trim() === '') {
+                return { valid: false, message: "Please enter a product key" };
+            }
+            
+            const keyData = fallbackKeys[key.toUpperCase()];
+            
+            if (!keyData) {
+                return { valid: false, message: "Invalid product key. Please check your key and try again." };
+            }
+            
+            if (!keyData.active) {
+                return { valid: false, message: "This key has been deactivated. Please contact support." };
+            }
+            
+            const today = new Date();
+            const expiryDate = new Date(keyData.expiry);
+            
+            if (today > expiryDate) {
+                return { valid: false, message: "This key has expired. Please renew your license." };
+            }
+            
+            return { 
+                valid: true, 
+                message: "Valid key! Preparing your personalized script...", 
+                userData: keyData 
+            };
         }
-        
-        throw new Error('Database unavailable');
-    } catch (error) {
-        console.warn('[LMS AI] Database validation failed, using fallback:', error);
-        
-        // Fallback to hardcoded keys
-        return validateKeyFallback(key);
-    }
-}
 
-// Keep your existing fallback function unchanged
-function validateKeyFallback(key) {
-    console.log('[LMS AI] Fallback validation for key:', key);
-    
-    // ===== PATTERN-BASED VALIDATION FOR LMS-AI KEYS =====
-    // Accept both formats: LMS-AI-2025-XXXXXXXX and TEST-2025-XXXXXX const lmsPattern = /^(LMS-AI-2025-[A-Z0-9]{8}|TEST-2025-[A-Z0-9]{6})$/;
-    if (lmsPattern.test(key)) {
-        console.log('[LMS AI] Valid LMS-AI pattern detected');
-        return {
-            valid: true,
-            message: "Valid LMS AI key! Preparing your personalized script...",
-            userData: {
-                name: "LMS AI User",
-                email: "user@example.com",
-                type: "STANDARD",
-                expiry: "2025-12-31",
-                active: true,
-                encryptionKey: "lms-ai-key-2025"
-            }
-        };
-    }
-    
-    // ===== EXISTING FALLBACK KEYS =====
-    const fallbackKeys = {
-        "DEMO-2025-TEST": {
-            name: "Demo User",
-            email: "demo@example.com",
-            type: "DEMO",
-            expiry: "2025-12-31",
-            active: true,
-            encryptionKey: "demo-secret-key-2025"
-        },
-        "ADMIN-2025-MASTER": {
-            name: "Administrator",
-            email: "admin@example.com", 
-            type: "ADMIN",
-            expiry: "2099-12-31",
-            active: true,
-            encryptionKey: "admin-master-key-2025"
-        },
-        "JOHN-2025-ABC123": {
-            name: "John Smith",
-            email: "john@example.com",
-            type: "STANDARD",
-            expiry: "2025-12-31",
-            active: true,
-            encryptionKey: "john-secret-key-2025"
-        }
-    };
-    
-    // ===== VALIDATION LOGIC =====
-    if (!key || key.trim() === '') {
-        return { valid: false, message: "Please enter a product key" };
-    }
-    
-    const keyData = fallbackKeys[key.toUpperCase()];
-    
-    if (!keyData) {
-        return { valid: false, message: "Invalid product key. Please check your key and try again." };
-    }
-    
-    if (!keyData.active) {
-        return { valid: false, message: "This key has been deactivated. Please contact support." };
-    }
-    
-    const today = new Date();
-    const expiryDate = new Date(keyData.expiry);
-    
-    if (today > expiryDate) {
-        return { valid: false, message: "This key has expired. Please renew your license." };
-    }
-    
-    return { 
-        valid: true, 
-        message: "Valid key! Preparing your personalized script...", 
-        userData: keyData 
-    };
-}
         // ===== SCRIPT FILE LOADING =====
         async function loadMasterScript() {
             try {
@@ -404,7 +398,6 @@ alert('LMS AI Assistant Pro Demo Mode\\nReal script file not found at ./lms-ai-s
                     document.getElementById('expiry').textContent = result.userData.expiry;
                     downloadSection.classList.remove('hidden');
                     
-                    // 📧 Send validation notification
                     sendValidationNotification(result.userData, 'Key Validation');
                     
                 } else {
@@ -412,7 +405,6 @@ alert('LMS AI Assistant Pro Demo Mode\\nReal script file not found at ./lms-ai-s
                     statusDiv.textContent = result.message;
                     downloadSection.classList.add('hidden');
                     
-                    // 📧 Send invalid key attempt notification
                     sendValidationNotification({ name: 'Unknown' }, 'Invalid Key Attempt');
                 }
                 
@@ -421,7 +413,6 @@ alert('LMS AI Assistant Pro Demo Mode\\nReal script file not found at ./lms-ai-s
                 statusDiv.classList.add('error');
                 statusDiv.textContent = 'Validation failed. Please try again.';
                 
-                // 📧 Send error notification
                 sendValidationNotification({ name: 'Error' }, 'Validation Error');
             } finally {
                 validateBtn.disabled = false;
@@ -429,7 +420,7 @@ alert('LMS AI Assistant Pro Demo Mode\\nReal script file not found at ./lms-ai-s
             }
         }
         
-      async function downloadScript() {
+        async function downloadScript() {
             if (!currentUserData) {
                 alert('Please validate your key first!');
                 return;
@@ -440,7 +431,6 @@ alert('LMS AI Assistant Pro Demo Mode\\nReal script file not found at ./lms-ai-s
             downloadBtn.textContent = '📥 Generating Script...';
             
             try {
-                // Load the master script or use demo
                 let masterScript;
                 try {
                     const response = await fetch('./lms-ai-script.js');
@@ -471,10 +461,8 @@ alert('LMS AI Assistant Pro Demo Mode\\nReal script file not found at ./lms-ai-s
                     
                     downloadBtn.textContent = '✅ Download Complete!';
                     
-                    // 📧 Send download notification
                     sendValidationNotification(currentUserData, 'Script Download');
                     
-                    // Show success message
                     setTimeout(() => {
                         showDownloadSuccessMessage();
                     }, 1000);
@@ -550,23 +538,20 @@ alert('LMS AI Assistant loaded successfully!');
                 }, 300);
             }, 5000);
         }
-function generatePersonalizedScript(userData, masterScript) {
+
+        function generatePersonalizedScript(userData, masterScript) {
             console.log('🔐 Generating secure loader script for:', userData.name);
             
-            // Get the current license key being validated
             const currentKey = document.getElementById('productKey').value.trim();
             
-            // Generate authorized domains
             const authorizedDomains = [
                 'canvas', 'blackboard', 'moodle', 'brightspace', 'schoology', 
                 'edmodo', 'google.classroom', 'teams.microsoft', 'learn',
                 'lms', 'elearning', 'education', 'university', 'college', 'school'
             ];
             
-            // Generate encryption key for this user
             const encryptionKey = generateUserEncryptionKey(userData, currentKey);
             
-            // Create the secure loader script
             const loaderScript = `// ==UserScript==
 // @name         LMS AI Assistant Pro - ${userData.name}
 // @namespace    https://lms-ai-assistant.com/
@@ -593,15 +578,11 @@ function generatePersonalizedScript(userData, masterScript) {
  * License Key: ${currentKey}
  * Valid Until: ${userData.expiry}
  * License Type: ${userData.type || 'STANDARD'}
- * 
- * This is a secure loader that fetches and decrypts the main LMS AI script.
- * The actual functionality is stored securely on the server.
  */
 
 (function() {
     'use strict';
     
-    // ===== SECURE CONFIGURATION =====
     const SECURITY_CONFIG = {
         LICENSE_KEY: '${currentKey}',
         USER_NAME: '${userData.name}',
@@ -618,7 +599,6 @@ function generatePersonalizedScript(userData, masterScript) {
     const MAX_ATTEMPTS = 3;
     let scriptLoaded = false;
     
-    // ===== DOMAIN AND LICENSE VALIDATION =====
     function performSecurityValidation() {
         try {
             console.log('🔍 LMS AI Loader: Performing security validation...');
@@ -627,7 +607,6 @@ function generatePersonalizedScript(userData, masterScript) {
             const now = new Date();
             const expiryDate = new Date(SECURITY_CONFIG.EXPIRY_DATE);
             
-            // Step 1: Domain Validation
             const isDomainAuthorized = SECURITY_CONFIG.AUTHORIZED_DOMAINS.some(domain => 
                 currentDomain.includes(domain) || 
                 currentDomain.split('.').some(part => domain.includes(part))
@@ -640,7 +619,6 @@ function generatePersonalizedScript(userData, masterScript) {
                 };
             }
             
-            // Step 2: License Expiry Check
             if (now > expiryDate) {
                 return { 
                     valid: false, 
@@ -648,7 +626,6 @@ function generatePersonalizedScript(userData, masterScript) {
                 };
             }
             
-            // Step 3: Time-based validation
             const daysSinceEpoch = Math.floor(now.getTime() / (1000 * 60 * 60 * 24));
             const expiryDays = Math.floor(expiryDate.getTime() / (1000 * 60 * 60 * 24));
             
@@ -670,7 +647,6 @@ function generatePersonalizedScript(userData, masterScript) {
         }
     }
     
-    // ===== SERVER VALIDATION =====
     async function performServerValidation() {
         try {
             console.log('🌐 LMS AI Loader: Checking license with server...');
@@ -712,12 +688,10 @@ function generatePersonalizedScript(userData, masterScript) {
         }
     }
     
-    // ===== LOAD AND DECRYPT MAIN SCRIPT =====
     async function loadMainScript(validationResult) {
         try {
             console.log('📦 LMS AI Loader: Loading main script...');
             
-            // Fetch the main LMS AI script
             const response = await fetch(SECURITY_CONFIG.SCRIPT_URL + '?v=' + Date.now(), {
                 cache: 'no-cache',
                 headers: {
@@ -732,21 +706,17 @@ function generatePersonalizedScript(userData, masterScript) {
             
             let scriptContent = await response.text();
             
-            // Check if script is encrypted
             if (scriptContent.includes('ENCRYPTED_LMS_AI_SCRIPT')) {
                 console.log('🔓 LMS AI Loader: Decrypting main script...');
                 scriptContent = decryptScript(scriptContent, validationResult.decryptionKey || SECURITY_CONFIG.ENCRYPTION_KEY);
             }
             
-            // Validate script content
             if (!scriptContent || scriptContent.length < 100) {
                 throw new Error('Invalid script content received');
             }
             
-            // Execute the main LMS AI script
             console.log('🚀 LMS AI Loader: Executing main script...');
             
-            // Create script context with user info
             const scriptContext = {
                 LMS_AI_USER: SECURITY_CONFIG.USER_NAME,
                 LMS_AI_LICENSE: SECURITY_CONFIG.LICENSE_KEY,
@@ -755,7 +725,6 @@ function generatePersonalizedScript(userData, masterScript) {
                 LMS_AI_LOADER_VERSION: SECURITY_CONFIG.LOADER_VERSION
             };
             
-            // Inject context and execute
             const contextScript = \`
                 window.LMS_AI_CONTEXT = \${JSON.stringify(scriptContext)};
                 \${scriptContent}
@@ -766,10 +735,7 @@ function generatePersonalizedScript(userData, masterScript) {
             scriptLoaded = true;
             console.log('✅ LMS AI Assistant loaded successfully for', SECURITY_CONFIG.USER_NAME);
             
-            // Track successful load
             trackScriptUsage(validationResult.method);
-            
-            // Send notification to admin
             notifyAdminOfUsage();
             
         } catch (error) {
@@ -778,10 +744,8 @@ function generatePersonalizedScript(userData, masterScript) {
         }
     }
     
-    // ===== SCRIPT DECRYPTION =====
     function decryptScript(encryptedContent, key) {
         try {
-            // Simple decryption - you can enhance this
             const lines = encryptedContent.split('\\n');
             const decryptedLines = lines.map(line => {
                 if (line.includes('ENCRYPTED_LMS_AI_SCRIPT')) {
@@ -793,11 +757,10 @@ function generatePersonalizedScript(userData, masterScript) {
             return decryptedLines.join('\\n');
         } catch (error) {
             console.error('Decryption failed:', error);
-            return encryptedContent; // Return as-is if decryption fails
+            return encryptedContent;
         }
     }
     
-    // ===== USAGE TRACKING =====
     function trackScriptUsage(method) {
         try {
             const usage = JSON.parse(localStorage.getItem('lms_ai_usage_tracking') || '{}');
@@ -810,7 +773,6 @@ function generatePersonalizedScript(userData, masterScript) {
             usage[today].loads++;
             usage[today].method.push(method);
             
-            // Keep only last 30 days
             const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
             Object.keys(usage).forEach(date => {
                 if (date < thirtyDaysAgo) {
@@ -824,10 +786,8 @@ function generatePersonalizedScript(userData, masterScript) {
         }
     }
     
-    // ===== ADMIN NOTIFICATION =====
     async function notifyAdminOfUsage() {
         try {
-            // Send usage notification to admin (non-blocking)
             fetch('${window.location.origin}/.netlify/functions/notify-usage', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -838,14 +798,13 @@ function generatePersonalizedScript(userData, masterScript) {
                     timestamp: new Date().toISOString(),
                     action: 'script_loaded'
                 })
-            }).catch(() => {}); // Silent fail
+            }).catch(() => {});
         } catch (error) {
-            // Silent fail - admin notification is not critical
+            // Silent fail
         }
     }
     
-    // ===== ERROR DISPLAY =====
-    function showErrorMessage(message) {
+  function showErrorMessage(message) {
         const errorDiv = document.createElement('div');
         errorDiv.style.cssText = \`
             position: fixed; top: 20px; right: 20px; z-index: 100000;
@@ -878,7 +837,6 @@ function generatePersonalizedScript(userData, masterScript) {
         }, 15000);
     }
     
-    // ===== SUCCESS INDICATOR =====
     function showLoadingIndicator() {
         const indicator = document.createElement('div');
         indicator.id = 'lms-ai-loading';
@@ -904,7 +862,6 @@ function generatePersonalizedScript(userData, masterScript) {
         return indicator;
     }
     
-    // ===== MAIN INITIALIZATION =====
     async function initializeLMSAI() {
         let loadingIndicator = null;
         
@@ -922,10 +879,8 @@ function generatePersonalizedScript(userData, masterScript) {
                 return;
             }
             
-            // Show loading indicator
             loadingIndicator = showLoadingIndicator();
             
-            // Step 1: Local security validation
             const localValidation = performSecurityValidation();
             
             if (!localValidation.valid) {
@@ -934,7 +889,6 @@ function generatePersonalizedScript(userData, masterScript) {
                 return;
             }
             
-            // Step 2: Server validation
             const serverValidation = await performServerValidation();
             
             if (!serverValidation.valid) {
@@ -943,10 +897,8 @@ function generatePersonalizedScript(userData, masterScript) {
                 return;
             }
             
-            // Step 3: Load main script
             await loadMainScript(serverValidation);
             
-            // Remove loading indicator
             if (loadingIndicator) {
                 loadingIndicator.innerHTML = '<span style="color: #27ae60;">✅ LMS AI Assistant Loaded!</span>';
                 setTimeout(() => {
@@ -963,11 +915,9 @@ function generatePersonalizedScript(userData, masterScript) {
         }
     }
     
-    // ===== START THE LOADER =====
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', initializeLMSAI);
     } else {
-        // Small delay to ensure page is ready
         setTimeout(initializeLMSAI, 500);
     }
     
@@ -977,7 +927,6 @@ function generatePersonalizedScript(userData, masterScript) {
             return loaderScript;
         }
 
-        // Helper function to generate user-specific encryption key
         function generateUserEncryptionKey(userData, licenseKey) {
             const components = [
                 userData.name.replace(/[^\w]/g, '').toLowerCase(),
@@ -998,57 +947,11 @@ function generatePersonalizedScript(userData, masterScript) {
             return Math.abs(hash).toString(36).padStart(12, '0').substring(0, 24);
         }
 
-        // Helper function to generate complex encryption key
-        function generateComplexEncryptionKey(userData, licenseKey) {
-            const keyComponents = [
-                userData.name.replace(/\s+/g, '').toLowerCase(),
-                userData.expiry.replace(/-/g, ''),
-                userData.type || 'STANDARD',
-                licenseKey || 'DEMO',
-                'lms-ai-secret-v2'
-            ];
-            
-            let combinedKey = keyComponents.join('-');
-            
-            // Generate hash-like key
-            let hash = 0;
-            for (let i = 0; i < combinedKey.length; i++) {
-                const char = combinedKey.charCodeAt(i);
-                hash = ((hash << 5) - hash) + char;
-                hash = hash & hash;
-            }
-            
-            return Math.abs(hash).toString(36).substring(0, 32);
-        }
-        function generateDemoScript() {
-            return `// Demo LMS AI Assistant Script
-console.log('LMS AI Assistant Demo Mode');
-alert('LMS AI Assistant loaded successfully!');
-
-// Demo functionality
-function showDemoFeatures() {
-    const demo = document.createElement('div');
-    demo.style.cssText = \`
-        position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-        background: #3498db; color: white; padding: 20px; border-radius: 10px;
-        z-index: 100000; text-align: center; font-family: Arial, sans-serif;
-    \`;
-    demo.innerHTML = '<h3>🎯 LMS AI Demo</h3><p>This is a demo version. Get a license for full features!</p>';
-    document.body.appendChild(demo);
-    
-    setTimeout(() => {
-        if (demo.parentNode) demo.parentNode.removeChild(demo);
-    }, 3000);
-}
-
-showDemoFeatures();`;
-        }
         // ===== SECRET ADMIN ACCESS =====
         let secretSequence = [];
         const adminCode = ['KeyA', 'KeyD', 'KeyM', 'KeyI', 'KeyN']; // Type "ADMIN"
         
         document.addEventListener('keydown', function(e) {
-            // Only track when no input is focused
             if (document.activeElement.tagName !== 'INPUT') {
                 secretSequence.push(e.code);
                 if (secretSequence.length > adminCode.length) {
@@ -1095,12 +998,10 @@ showDemoFeatures();`;
             
             document.body.appendChild(secretDiv);
             
-            // Focus password input
             setTimeout(() => {
                 document.getElementById('adminPassword').focus();
             }, 100);
             
-            // Allow Enter key
             document.getElementById('adminPassword').addEventListener('keypress', function(e) {
                 if (e.key === 'Enter') {
                     checkAdminPassword();
@@ -1108,13 +1009,11 @@ showDemoFeatures();`;
             });
         }
         
-function checkAdminPassword() {
+        function checkAdminPassword() {
             const password = document.getElementById('adminPassword').value;
             
-            // Get current admin password (check localStorage)
-            let correctPassword = 'admin2025'; // Default
+            let correctPassword = 'admin2025';
             
-            // Check system settings first
             const systemSettings = localStorage.getItem('lms_ai_system_settings');
             if (systemSettings) {
                 try {
@@ -1127,7 +1026,6 @@ function checkAdminPassword() {
                 }
             }
             
-            // Check dedicated password storage
             const storedPassword = localStorage.getItem('lms_ai_admin_password');
             if (storedPassword) {
                 correctPassword = storedPassword;
@@ -1149,19 +1047,13 @@ function checkAdminPassword() {
             }
         }
 
-        // Test that functions are loaded
-        console.log('LMS AI Assistant loaded successfully!');
-        console.log('Database validation: Available');
-        console.log('Secret admin access: Type "ADMIN" on page');
-        // ===== EMAIL NOTIFICATIONS FOR KEY VALIDATION =====
-       // ===== EMAIL NOTIFICATIONS FOR KEY VALIDATION (DEBUG VERSION) =====
+        // ===== EMAIL NOTIFICATIONS =====
         async function sendValidationNotification(keyData, action) {
             try {
                 console.log('[EMAIL DEBUG] Starting notification process...');
                 console.log('[EMAIL DEBUG] Action:', action);
                 console.log('[EMAIL DEBUG] Key data:', keyData);
                 
-                // Get admin email settings
                 const adminSettings = localStorage.getItem('lms_ai_system_settings');
                 console.log('[EMAIL DEBUG] Admin settings found:', !!adminSettings);
                 
@@ -1202,7 +1094,6 @@ function checkAdminPassword() {
             } catch (error) {
                 console.error('[EMAIL DEBUG] Notification failed:', error);
                 console.error('[EMAIL DEBUG] Error details:', error.message);
-                // Don't show error to user - notifications are background
             }
         }
 
@@ -1248,12 +1139,10 @@ function checkAdminPassword() {
                 throw new Error('EmailJS not configured properly');
             }
 
-            // Check if EmailJS is available
             if (typeof emailjs === 'undefined') {
                 throw new Error('EmailJS library not loaded');
             }
 
-            // Initialize EmailJS
             console.log('[EMAIL DEBUG] Initializing EmailJS...');
             emailjs.init(settings.emailjsPublicKey);
 
@@ -1337,6 +1226,11 @@ Monitor for repeated invalid attempts from same source.`;
                     return `📬 LMS AI Activity: ${type}\n\nTimestamp: ${timestamp}\nDetails: ${JSON.stringify(data, null, 2)}`;
             }
         }
+
+        // Test that functions are loaded
+        console.log('LMS AI Assistant loaded successfully!');
+        console.log('Database validation: Available');
+        console.log('Secret admin access: Type "ADMIN" on page');
     </script>
 </body>
 </html>
