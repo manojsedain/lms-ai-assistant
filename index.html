@@ -274,7 +274,7 @@ function validateKeyFallback(key) {
     console.log('[LMS AI] Fallback validation for key:', key);
     
     // ===== PATTERN-BASED VALIDATION FOR LMS-AI KEYS =====
-    const lmsPattern = /^LMS-AI-2025-[A-Z0-9]{8}$/;
+    // Accept both formats: LMS-AI-2025-XXXXXXXX and TEST-2025-XXXXXX const lmsPattern = /^(LMS-AI-2025-[A-Z0-9]{8}|TEST-2025-[A-Z0-9]{6})$/;
     if (lmsPattern.test(key)) {
         console.log('[LMS AI] Valid LMS-AI pattern detected');
         return {
