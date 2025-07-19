@@ -3222,7 +3222,8 @@ document.addEventListener('DOMContentLoaded', function() {
 function showAdminPanel() {
     document.getElementById('loginContainer').style.display = 'none';
     document.getElementById('adminLayout').classList.add('active');
-    initializeAdminPanel();
+    initializeAdminPanel(); // This will load real data
+    showToast('Welcome to the admin panel!', 'success');
 }
         // Theme Management
         function initializeTheme() {
@@ -3353,7 +3354,18 @@ function showAdminPanel() {
             loadNotifications();
             updateUserInfo();
         }
-
+function initializeAdminPanel() {
+    loadDashboardData();
+    loadPendingRequests(); // This will also load real pending requests
+    updateUserInfo();
+    
+    // Set up auto-refresh every 30 seconds
+    setInterval(() => {
+        if (currentSection === 'dashboard') {
+            loadDashboardData();
+        }
+    }, 30000);
+}
         function updateUserInfo() {
             if (currentUser) {
                 document.getElementById('userAvatar').textContent = currentUser.name.charAt(0).toUpperCase();
@@ -3695,7 +3707,9 @@ function showAdminPanel() {
         }
 
         // Placeholder functions for functionality to be implemented
-        function refreshDashboard() { loadDashboardData(); }
+        function refreshDashboard() {
+    loadDashboardData();
+}
         function exportReport() { showToast('Exporting report...', 'info'); }
         function refreshActivity() { loadDashboardData(); }
         function showAddUserModal() { showModal('addUserModal'); }
