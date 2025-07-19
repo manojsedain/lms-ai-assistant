@@ -32,29 +32,69 @@ exports.handler = async (event, context) => {
       };
     }
 
-    // Method 1: Check environment variables (you can set these in Netlify dashboard)
-    const envKeys = process.env.VALID_KEYS ? JSON.parse(process.env.VALID_KEYS) : {};
-    
-    // Method 2: Hardcoded keys (for testing)
-    const hardcodedKeys = {
-      'DEMO-2025-TEST': {
-        name: 'Demo User',
-        email: 'demo@example.com',
-        expiry: '2025-12-31',
-        type: 'DEMO',
-        active: true
+    // Method 1: Check environment variables for admin-generated keys
+    // You can set ADMIN_KEYS in Netlify dashboard as JSON string
+    let adminKeys = {};
+    try {
+      if (process.env.ADMIN_KEYS) {
+        adminKeys = JSON.parse(process.env.ADMIN_KEYS);
       }
-    };
-
-    // Method 3: Pattern-based validation for LMS-AI keys
-    const lmsPattern = /^LMS-AI-2025-[A-Z0-9]{8}$/;
-    if (lmsPattern.test(licenseKey)) {
+    } catch (e) {
+      console.warn('Could not parse ADMIN_KEYS environment variable');
+    }
+    
+    // Check if key exists in admin keys
+    if (adminKeys[licenseKey]) {
+      const keyData = adminKeys[licenseKey];
+      
+      // Validate key
+      if (!keyData.active) {
+        return {
+          statusCode: 200,
+          headers,
+          body: JSON.stringify({
+            valid: false,
+            message: 'License key deactivated'
+          })
+        };
+      }
+      
+      const today = new Date();
+      const expiry = new Date(keyData.expiry);
+      
+      if (today > expiry) {
+        return {
+          statusCode: 200,
+          headers,
+          body: JSON.stringify({
+            valid: false,
+            message: 'License key expired'
+          })
+        };
+      }
+      
+      console.log('[Netlify] Valid admin key found:', licenseKey);
       return {
         statusCode: 200,
         headers,
         body: JSON.stringify({
           valid: true,
-          message: 'Valid LMS-AI license key',
+          message: 'License validated from Netlify database',
+          user: keyData
+        })
+      };
+    }
+
+    // Method 2: Pattern-based validation for LMS-AI keys
+    const lmsPattern = /^LMS-AI-2025-[A-Z0-9]{8}$/;
+    if (lmsPattern.test(licenseKey)) {
+      console.log('[Netlify] Valid LMS-AI pattern key:', licenseKey);
+      return {
+        statusCode: 200,
+        headers,
+        body: JSON.stringify({
+          valid: true,
+          message: 'Valid LMS-AI license key (pattern match)',
           user: {
             name: 'LMS AI User',
             email: 'user@lms-ai.com',
@@ -66,54 +106,14 @@ exports.handler = async (event, context) => {
       };
     }
 
-    // Check environment keys first, then hardcoded
-    const allKeys = { ...hardcodedKeys, ...envKeys };
-    const keyData = allKeys[licenseKey];
-    
-    if (!keyData) {
-      return {
-        statusCode: 200,
-        headers,
-        body: JSON.stringify({
-          valid: false,
-          message: 'Invalid license key'
-        })
-      };
-    }
-
-    // Validate key status and expiry
-    if (!keyData.active) {
-      return {
-        statusCode: 200,
-        headers,
-        body: JSON.stringify({
-          valid: false,
-          message: 'License key deactivated'
-        })
-      };
-    }
-
-    const today = new Date();
-    const expiry = new Date(keyData.expiry);
-    
-    if (today > expiry) {
-      return {
-        statusCode: 200,
-        headers,
-        body: JSON.stringify({
-          valid: false,
-          message: 'License key expired'
-        })
-      };
-    }
-
+    // Key not found
+    console.log('[Netlify] Key not found:', licenseKey);
     return {
       statusCode: 200,
       headers,
       body: JSON.stringify({
-        valid: true,
-        message: 'License validated successfully',
-        user: keyData
+        valid: false,
+        message: 'Invalid license key - not found in database'
       })
     };
 
@@ -124,7 +124,7 @@ exports.handler = async (event, context) => {
       headers,
       body: JSON.stringify({
         valid: false,
-        message: 'Server error'
+        message: 'Server error during validation'
       })
     };
   }
