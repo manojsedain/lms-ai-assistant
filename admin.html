@@ -1349,17 +1349,15 @@ function savePayPalSettings() {
         }
 
         // ===== KEY GENERATION =====
-        function generateNewKey() {
-            const userName = document.getElementById('userName').value.trim();
-            const duration = parseInt(document.getElementById('keyDuration').value);
-            const keyType = document.getElementById('keyType').value;
-            const userEmail = document.getElementById('userEmail').value.trim();
-
-            if (!userName) {
-                alert('❌ Please enter a user name');
-                return;
-            }
-
+function generateKey() {
+    // Generate LMS-AI format instead of TEST format
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let keyCode = '';
+    for (let i = 0; i < 8; i++) {
+        keyCode += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return 'LMS-AI-2025-' + keyCode;
+}
             const namePrefix = userName.toUpperCase().replace(/[^A-Z]/g, '').substring(0, 4).padEnd(4, 'X');
             const year = new Date().getFullYear();
             const random = Math.random().toString(36).substring(2, 8).toUpperCase();
