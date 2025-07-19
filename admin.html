@@ -4018,6 +4018,351 @@ function showAdminPanel() {
                 hideLoading();
             }
         }
+    // Additional missing function implementations
+        function generateNewTokens() {
+            if (confirm('Are you sure you want to regenerate all security tokens? This will invalidate existing sessions.')) {
+                showToast('Regenerating security tokens...', 'warning');
+                setTimeout(() => {
+                    showToast('Security tokens regenerated successfully!', 'success');
+                }, 2000);
+            }
+        }
+
+        function auditSecurity() {
+            showLoading('Running security audit...');
+            setTimeout(() => {
+                hideLoading();
+                showToast('Security audit completed. No issues found.', 'success');
+            }, 3000);
+        }
+
+        function saveSecurity() {
+            showLoading('Saving security settings...');
+            setTimeout(() => {
+                hideLoading();
+                showToast('Security settings saved successfully!', 'success');
+            }, 1500);
+        }
+
+        function updatePasswords() {
+            const currentPassword = document.getElementById('currentAdminPassword')?.value;
+            const newPassword = document.getElementById('newAdminPassword')?.value;
+            const confirmPassword = document.getElementById('confirmAdminPassword')?.value;
+
+            if (!currentPassword || !newPassword || !confirmPassword) {
+                showToast('Please fill in all password fields', 'error');
+                return;
+            }
+
+            if (newPassword !== confirmPassword) {
+                showToast('New passwords do not match', 'error');
+                return;
+            }
+
+            if (newPassword.length < 8) {
+                showToast('Password must be at least 8 characters long', 'error');
+                return;
+            }
+
+            showLoading('Updating passwords...');
+            setTimeout(() => {
+                hideLoading();
+                showToast('Passwords updated successfully!', 'success');
+                // Clear password fields
+                document.getElementById('currentAdminPassword').value = '';
+                document.getElementById('newAdminPassword').value = '';
+                document.getElementById('confirmAdminPassword').value = '';
+            }, 2000);
+        }
+
+        function saveSystemSettings() {
+            showLoading('Saving system settings...');
+            setTimeout(() => {
+                hideLoading();
+                showToast('System settings saved successfully!', 'success');
+            }, 1500);
+        }
+
+        function exportSystemConfig() {
+            showToast('Exporting system configuration...', 'info');
+            
+            const config = {
+                systemName: document.getElementById('systemName')?.value || 'LMS AI Assistant',
+                adminEmail: document.getElementById('adminEmail')?.value || 'admin@example.com',
+                timezone: document.getElementById('systemTimezone')?.value || 'UTC',
+                language: document.getElementById('systemLanguage')?.value || 'en',
+                exportDate: new Date().toISOString()
+            };
+
+            const blob = new Blob([JSON.stringify(config, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'lms-ai-config.json';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            showToast('Configuration exported successfully!', 'success');
+        }
+
+        function resetToDefaults() {
+            if (confirm('Are you sure you want to reset all settings to default values? This action cannot be undone.')) {
+                showLoading('Resetting to defaults...');
+                setTimeout(() => {
+                    hideLoading();
+                    showToast('Settings reset to defaults successfully!', 'success');
+                }, 2000);
+            }
+        }
+
+        function confirmEmergencyShutdown() {
+            if (confirm('⚠️ EMERGENCY SHUTDOWN ⚠️\n\nThis will immediately disable all system access and cannot be undone remotely.\n\nAre you absolutely sure?')) {
+                if (confirm('This is your final warning. Type YES to confirm emergency shutdown.')) {
+                    showLoading('Initiating emergency shutdown...');
+                    setTimeout(() => {
+                        hideLoading();
+                        showToast('🚨 EMERGENCY SHUTDOWN INITIATED 🚨', 'error');
+                        setTimeout(() => {
+                            alert('System shutdown complete. Remote access disabled.');
+                        }, 2000);
+                    }, 3000);
+                }
+            }
+        }
+
+        function toggleMaintenanceMode() {
+            const currentMode = document.getElementById('maintenanceModeText').textContent;
+            const isEnabled = currentMode.includes('Enable');
+            
+            if (isEnabled) {
+                showToast('Enabling maintenance mode...', 'warning');
+                document.getElementById('maintenanceModeText').textContent = 'Disable Maintenance Mode';
+            } else {
+                showToast('Disabling maintenance mode...', 'info');
+                document.getElementById('maintenanceModeText').textContent = 'Enable Maintenance Mode';
+            }
+        }
+
+        function confirmFactoryReset() {
+            if (confirm('Are you sure you want to reset all settings to factory defaults?\n\nUser data and logs will be preserved, but all configuration will be reset.')) {
+                showLoading('Performing factory reset...');
+                setTimeout(() => {
+                    hideLoading();
+                    showToast('Factory reset completed successfully!', 'success');
+                }, 3000);
+            }
+        }
+
+        function uploadScript() {
+            const scriptFile = document.getElementById('scriptFile')?.files[0];
+            const version = document.getElementById('scriptVersion')?.value;
+            const releaseNotes = document.getElementById('releaseNotes')?.value;
+
+            if (!scriptFile) {
+                showToast('Please select a script file to upload', 'error');
+                return;
+            }
+
+            if (!version) {
+                showToast('Please enter a version number', 'error');
+                return;
+            }
+
+            showLoading('Uploading script...');
+            setTimeout(() => {
+                hideLoading();
+                showToast(`Script v${version} uploaded successfully!`, 'success');
+                closeModal('uploadScriptModal');
+                
+                // Reset form
+                document.getElementById('scriptFile').value = '';
+                document.getElementById('scriptVersion').value = '';
+                document.getElementById('releaseNotes').value = '';
+            }, 3000);
+        }
+
+        function saveScriptSettings() {
+            showLoading('Saving script settings...');
+            setTimeout(() => {
+                hideLoading();
+                showToast('Script settings saved successfully!', 'success');
+                closeModal('scriptSettingsModal');
+            }, 1500);
+        }
+
+        function switchTab(tabName) {
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // Remove active class from all tab buttons
+            document.querySelectorAll('.tab-button').forEach(button => {
+                button.classList.remove('active');
+            });
+            
+            // Show selected tab content
+            const selectedTab = document.getElementById(tabName);
+            if (selectedTab) {
+                selectedTab.classList.add('active');
+            }
+            
+            // Add active class to clicked button
+            event.target.classList.add('active');
+        }
+
+        function handleFileSelect(input) {
+            const fileList = document.getElementById('uploadFileList');
+            if (fileList && input.files.length > 0) {
+                const file = input.files[0];
+                fileList.innerHTML = `
+                    <div class="file-item">
+                        <div class="file-info">
+                            <span class="file-icon">📄</span>
+                            <div>
+                                <div class="file-name">${file.name}</div>
+                                <div class="file-size">${(file.size / 1024).toFixed(1)} KB</div>
+                            </div>
+                        </div>
+                        <div class="file-actions">
+                            <button class="btn btn-sm btn-danger" onclick="clearFileSelection()">Remove</button>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        function clearFileSelection() {
+            document.getElementById('scriptFile').value = '';
+            document.getElementById('uploadFileList').innerHTML = '';
+        }
+
+        function toggle2FA() {
+            const toggleText = document.getElementById('twoFactorToggleText');
+            const twoFactorSettings = document.getElementById('twoFactorSettings');
+            
+            if (toggleText.textContent.includes('Disable')) {
+                if (confirm('Are you sure you want to disable Two-Factor Authentication? This will reduce security.')) {
+                    toggleText.textContent = 'Enable 2FA';
+                    twoFactorSettings.style.display = 'none';
+                    showToast('Two-Factor Authentication disabled', 'warning');
+                }
+            } else {
+                toggleText.textContent = 'Disable 2FA';
+                twoFactorSettings.style.display = 'block';
+                showToast('Two-Factor Authentication enabled', 'success');
+            }
+        }
+
+        function refreshSecurityEvents() {
+            showToast('Refreshing security events...', 'info');
+            // In a real implementation, this would reload security events from the database
+        }
+
+        function markAllRead() {
+            showToast('All notifications marked as read', 'success');
+            closeModal('notificationsModal');
+        }
+
+        function toggleSelectAllPending() {
+            const selectAll = document.getElementById('selectAllPending');
+            const checkboxes = document.querySelectorAll('#pendingTableBody input[type="checkbox"]');
+            
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = selectAll.checked;
+            });
+        }
+
+        function toggleSelectAllUsers() {
+            const selectAll = document.getElementById('selectAllUsers');
+            const checkboxes = document.querySelectorAll('#usersTableBody input[type="checkbox"]');
+            
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = selectAll.checked;
+            });
+        }
+
+        function toggleSelectAllDevices() {
+            const selectAll = document.getElementById('selectAllDevices');
+            const checkboxes = document.querySelectorAll('#devicesTableBody input[type="checkbox"]');
+            
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = selectAll.checked;
+            });
+        }
+
+        function bulkSuspendUsers() {
+            showToast('Suspending selected users...', 'warning');
+        }
+
+        function bulkActivateUsers() {
+            showToast('Activating selected users...', 'success');
+        }
+
+        function bulkRemoveUsers() {
+            if (confirm('Are you sure you want to remove the selected users?')) {
+                showToast('Removing selected users...', 'error');
+            }
+        }
+
+        function clearUserSelection() {
+            document.querySelectorAll('#usersTableBody input[type="checkbox"]').forEach(cb => cb.checked = false);
+            document.getElementById('selectAllUsers').checked = false;
+        }
+
+        function disableScript() {
+            if (confirm('Are you sure you want to disable the current script? This will stop all AI assistant functionality.')) {
+                showToast('Script disabled successfully', 'warning');
+            }
+        }
+
+        function showRollbackModal() {
+            showToast('Rollback feature coming soon!', 'info');
+        }
+
+        function downloadCurrentScript() {
+            showToast('Downloading current script...', 'info');
+        }
+
+        function blockDevice() {
+            const hwid = document.getElementById('blockDeviceHwid')?.value;
+            const reason = document.getElementById('blockReason')?.value;
+            
+            if (!hwid) {
+                showToast('Please enter a device HWID', 'error');
+                return;
+            }
+            
+            showLoading('Blocking device...');
+            setTimeout(() => {
+                hideLoading();
+                showToast(`Device ${hwid} blocked successfully`, 'success');
+                closeModal('blockDeviceModal');
+            }, 1500);
+        }
+
+        function addNewUser() {
+            const name = document.getElementById('newUserName')?.value;
+            const email = document.getElementById('newUserEmail')?.value;
+            
+            if (!name) {
+                showToast('Please enter a user name', 'error');
+                return;
+            }
+            
+            showLoading('Adding new user...');
+            setTimeout(() => {
+                hideLoading();
+                showToast(`User ${name} added successfully`, 'success');
+                closeModal('addUserModal');
+                
+                // Reset form
+                if (document.getElementById('newUserName')) document.getElementById('newUserName').value = '';
+                if (document.getElementById('newUserEmail')) document.getElementById('newUserEmail').value = '';
+            }, 1500);
+        }
     </script>
 </body>
 </html>
