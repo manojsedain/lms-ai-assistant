@@ -217,69 +217,97 @@
             }
         }
 // ===== DATABASE-POWERED KEY VALIDATION =====
-        async function validateProductKey(key) {
-            try {
-                console.log('[LMS AI] Validating key with database:', key);
+async function validateProductKey(key) {
+    try {
+        console.log('[LMS AI] Validating key with database:', key);
+        
+        // PRIORITY 1: Try Netlify database function first
+        try {
+            const response = await fetch('/.netlify/functions/validate-key', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ 
+                    licenseKey: key,
+                    action: 'validate'
+                })
+            });
+            
+            if (response.ok) {
+                const result = await response.json();
+                console.log('[LMS AI] Netlify database validation result:', result);
                 
-                // First check localStorage for keys generated in admin panel
-                const localKeys = JSON.parse(localStorage.getItem('lms_ai_local_keys') || '{}');
-                if (localKeys[key]) {
-                    console.log('[LMS AI] Found key in localStorage:', localKeys[key]);
+                if (result.valid && result.user) {
+                    console.log('[LMS AI] ✅ Key found in Netlify database');
                     return {
                         valid: true,
-                        message: "Valid key found in local database!",
+                        message: "Valid key found in Netlify database!",
                         userData: {
-                            name: localKeys[key].name,
-                            email: localKeys[key].email || 'user@example.com',
-                            expiry: localKeys[key].expiry,
-                            type: localKeys[key].type || 'STANDARD',
-                            active: localKeys[key].active
+                            name: result.user.name,
+                            email: result.user.email,
+                            expiry: result.user.expiry,
+                            type: result.user.type || 'STANDARD',
+                            active: result.user.active
                         }
                     };
+                } else {
+                    console.log('[LMS AI] Key not found in Netlify database, trying localStorage...');
                 }
-                
-                // Try Netlify database function
-                const response = await fetch('/.netlify/functions/validate-key', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ 
-                        licenseKey: key,
-                        action: 'validate'
-                    })
-                });
-                
-                if (response.ok) {
-                    const result = await response.json();
-                    console.log('[LMS AI] Database validation result:', result);
-                    
-                    if (result.valid && result.user) {
-                        return {
-                            valid: true,
-                            message: "Valid key! Preparing your personalized script...",
-                            userData: {
-                                name: result.user.name,
-                                email: result.user.email,
-                                expiry: result.user.expiry,
-                                type: result.user.type || 'STANDARD',
-                                active: result.user.active
-                            }
-                        };
-                    } else {
-                        return {
-                            valid: false,
-                            message: result.message || "Invalid license key"
-                        };
-                    }
-                }
-                
-                throw new Error('Database unavailable');
-            } catch (error) {
-                console.warn('[LMS AI] Database validation failed, using fallback:', error);
-                return validateKeyFallback(key);
+            } else {
+                console.log('[LMS AI] Netlify database not responding, trying localStorage...');
             }
+        } catch (netlifyError) {
+            console.warn('[LMS AI] Netlify database error, trying localStorage:', netlifyError.message);
         }
+        
+        // PRIORITY 2: Check localStorage for admin-generated keys
+        const localKeys = JSON.parse(localStorage.getItem('lms_ai_local_keys') || '{}');
+        if (localKeys[key]) {
+            console.log('[LMS AI] ✅ Key found in localStorage:', localKeys[key]);
+            
+            // Check if key is active and not expired
+            const keyData = localKeys[key];
+            const today = new Date();
+            const expiryDate = new Date(keyData.expiry);
+            
+            if (!keyData.active) {
+                return {
+                    valid: false,
+                    message: "This key has been deactivated in admin panel."
+                };
+            }
+            
+            if (today > expiryDate) {
+                return {
+                    valid: false,
+                    message: "This key has expired. Please contact admin for renewal."
+                };
+            }
+            
+            return {
+                valid: true,
+                message: "Valid key found in local admin database!",
+                userData: {
+                    name: keyData.name,
+                    email: keyData.email || 'user@example.com',
+                    expiry: keyData.expiry,
+                    type: keyData.type || 'STANDARD',
+                    active: keyData.active
+                }
+            };
+        }
+        
+        console.log('[LMS AI] Key not found in localStorage, trying demo keys...');
+        
+        // PRIORITY 3: Final fallback to demo keys
+        return validateKeyFallback(key);
+        
+    } catch (error) {
+        console.error('[LMS AI] All validation methods failed:', error);
+        return validateKeyFallback(key);
+    }
+}
 
         function validateKeyFallback(key) {
             console.log('[LMS AI] Fallback validation for key:', key);
