@@ -284,6 +284,8 @@
             100% { transform: rotate(360deg); }
         }
     </style>
+    <!-- EmailJS for notifications -->
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
 </head>
 <body>
     <!-- Login Screen -->
@@ -1370,6 +1372,108 @@ async function saveKeyToDatabase() {
             alert(`✅ Pricing updated: $${price.toFixed(2)} per key`);
             
             logActivity('pricing_updated', `Key price set to $${price.toFixed(2)}`);
+        }
+        // ===== EMAIL NOTIFICATIONS =====
+        function initializeEmailJS() {
+            if (systemSettings.emailService === 'emailjs' && systemSettings.emailjsPublicKey) {
+                emailjs.init(systemSettings.emailjsPublicKey);
+            }
+        }
+
+        async function sendEmailNotification(type, data) {
+            if (systemSettings.emailService !== 'emailjs' || !systemSettings.notificationEmail) {
+                return; // Email disabled
+            }
+
+            try {
+                const templateParams = {
+                    to_email: systemSettings.notificationEmail,
+                    subject: `LMS AI - ${type}`,
+                    message: formatEmailMessage(type, data),
+                    timestamp: new Date().toLocaleString()
+                };
+
+                await emailjs.send(
+                    systemSettings.emailjsServiceId,
+                    systemSettings.emailjsTemplateId,
+                    templateParams
+                );
+
+                console.log('Email notification sent:', type);
+            } catch (error) {
+                console.error('Email send failed:', error);
+            }
+        }
+
+        function formatEmailMessage(type, data) {
+            switch (type) {
+                case 'Key Validation':
+                    return `Key ${data.keyCode} was validated by ${data.userName} at ${new Date().toLocaleString()}`;
+                case 'Key Generated':
+                    return `New key ${data.keyCode} generated for ${data.userName}`;
+                case 'Bulk Keys Generated':
+                    return `${data.count} bulk keys generated with prefix ${data.prefix}`;
+                case 'Script Download':
+                    return `User ${data.userName} downloaded script using key ${data.keyCode}`;
+                default:
+                    return `LMS AI Activity: ${type}`;
+            }
+        }
+        function toggleEmailFields() {
+            const service = document.getElementById('emailService').value;
+            const fields = document.getElementById('emailjsFields');
+            
+            if (service === 'emailjs') {
+                fields.classList.remove('hidden');
+            } else {
+                fields.classList.add('hidden');
+            }
+        }
+
+        // Update email settings form
+        function saveEmailSettings() {
+            <h4 style="margin-top: 20px;">📧 Email Settings</h4>
+                    <div class="form-group">
+                        <label for="notificationEmail">Notification Email:</label>
+                        <input type="email" id="notificationEmail" placeholder="admin@yoursite.com">
+                    </div>
+                    <div class="form-group">
+                        <label for="emailService">Email Service:</label>
+                        <select id="emailService" onchange="toggleEmailFields()">
+                            <option value="disabled">Disabled</option>
+                            <option value="emailjs">EmailJS (Free)</option>
+                        </select>
+                    </div>
+                    <div id="emailjsFields" class="hidden">
+                        <div class="form-group">
+                            <label for="emailjsPublicKey">EmailJS Public Key:</label>
+                            <input type="text" id="emailjsPublicKey" placeholder="Your EmailJS public key">
+                        </div>
+                        <div class="form-group">
+                            <label for="emailjsServiceId">EmailJS Service ID:</label>
+                            <input type="text" id="emailjsServiceId" placeholder="service_xxxxxxx">
+                        </div>
+                        <div class="form-group">
+                            <label for="emailjsTemplateId">EmailJS Template ID:</label>
+                            <input type="text" id="emailjsTemplateId" placeholder="template_xxxxxxx">
+                        </div>
+                        <p style="font-size: 12px; color: #666;">
+                            📝 <a href="https://emailjs.com" target="_blank">Get free EmailJS account</a> for email notifications
+                        </p>
+                    </div>
+                    <button onclick="saveEmailSettings()" class="btn-success">💾 Save Email Settings</button>
+            
+            systemSettings.notificationEmail = document.getElementById('notificationEmail').value.trim();
+            systemSettings.emailService = document.getElementById('emailService').value;
+            systemSettings.emailjsPublicKey = document.getElementById('emailjsPublicKey').value.trim();
+            systemSettings.emailjsServiceId = document.getElementById('emailjsServiceId').value.trim();
+            systemSettings.emailjsTemplateId = document.getElementById('emailjsTemplateId').value.trim();
+            
+            saveSystemSettings();
+            initializeEmailJS();
+            alert('✅ Email settings saved successfully!');
+            
+            logActivity('email_settings_updated', `Email service: ${systemSettings.emailService}`);
         }
 
         // ===== BULK KEY GENERATION =====
