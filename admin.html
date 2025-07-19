@@ -596,11 +596,25 @@
         let isDatabaseConnected = false;
 
         // ===== LOGIN SYSTEM =====
+// ===== LOGIN SYSTEM (UPDATED) =====
         function attemptLogin() {
             const password = document.getElementById('loginPassword').value;
             const errorDiv = document.getElementById('errorMessage');
             
-            if (password === ADMIN_PASSWORD) {
+            // Load current admin password from settings
+            const stored = localStorage.getItem('lms_ai_system_settings');
+            let currentPassword = 'admin2025'; // Default
+            
+            if (stored) {
+                try {
+                    const settings = JSON.parse(stored);
+                    currentPassword = settings.adminPassword || 'admin2025';
+                } catch (e) {
+                    console.warn('Could not load settings, using default password');
+                }
+            }
+            
+            if (password === currentPassword) {
                 document.getElementById('loginContainer').style.display = 'none';
                 document.getElementById('adminContainer').style.display = 'block';
                 initializeAdmin();
@@ -618,6 +632,54 @@
                 
                 logActivity('admin_login_failed', 'Failed login attempt');
             }
+        }
+
+        function changeAdminPassword() {
+            const newPassword = document.getElementById('newAdminPassword').value.trim();
+            
+            if (!newPassword) {
+                alert('❌ Please enter a new password');
+                return;
+            }
+            
+            if (newPassword.length < 6) {
+                alert('❌ Password must be at least 6 characters');
+                return;
+            }
+            
+            if (confirm(`🔑 Change admin password to: ${newPassword}?\n\nMake sure you remember this password!`)) {
+                systemSettings.adminPassword = newPassword;
+                saveSystemSettings();
+                
+                // Also update the main site password
+                updateMainSitePassword(newPassword);
+                
+                alert('✅ Admin password updated successfully!\n\nNew password: ' + newPassword + '\n\nThis works for both admin panel and main site secret access.');
+                document.getElementById('newAdminPassword').value = '';
+                
+                logActivity('admin_password_changed', 'Admin password updated');
+            }
+        }
+
+        function updateMainSitePassword(newPassword) {
+            // Store in a way that main site can access
+            localStorage.setItem('lms_ai_admin_password', newPassword);
+        }
+
+        function getCurrentAdminPassword() {
+            // First check system settings
+            if (systemSettings.adminPassword && systemSettings.adminPassword !== 'admin2025') {
+                return systemSettings.adminPassword;
+            }
+            
+            // Then check dedicated storage
+            const stored = localStorage.getItem('lms_ai_admin_password');
+            if (stored) {
+                return stored;
+            }
+            
+            // Fallback to default
+            return 'admin2025';
         }
         
         function logout() {
