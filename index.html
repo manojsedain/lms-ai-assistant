@@ -1,0 +1,1160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LMS AI Assistant - Smart Learning Solutions</title>
+    <meta name="description" content="Advanced AI Assistant for Learning Management Systems - Download and enhance your educational experience">
+    
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#1a1a2e">
+    <link rel="manifest" href="/manifest.json">
+    
+    <!-- Icons -->
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-color: #6366f1;
+            --secondary-color: #8b5cf6;
+            --accent-color: #06b6d4;
+            --background-dark: #0f0f23;
+            --background-light: #1a1a2e;
+            --text-primary: #ffffff;
+            --text-secondary: #a1a1aa;
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --success-color: #10b981;
+            --error-color: #ef4444;
+            --warning-color: #f59e0b;
+        }
+
+        [data-theme="light"] {
+            --background-dark: #f8fafc;
+            --background-light: #ffffff;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --glass-bg: rgba(0, 0, 0, 0.05);
+            --glass-border: rgba(0, 0, 0, 0.1);
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--background-dark) 0%, var(--background-light) 100%);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Glassmorphism Effects */
+        .glass {
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+        }
+
+        .glass-strong {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+        }
+
+        /* Header */
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            padding: 1rem 0;
+            backdrop-filter: blur(10px);
+            background: rgba(15, 15, 35, 0.8);
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .nav {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 2rem;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .theme-toggle {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 50px;
+            padding: 0.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .theme-toggle:hover {
+            background: var(--primary-color);
+            transform: scale(1.05);
+        }
+
+        /* Main Content */
+        .main {
+            padding-top: 100px;
+            min-height: 100vh;
+        }
+
+        .hero {
+            text-align: center;
+            padding: 4rem 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .hero-title {
+            font-size: clamp(2.5rem, 5vw, 4rem);
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color), var(--accent-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: fadeInUp 1s ease-out;
+        }
+
+        .hero-subtitle {
+            font-size: 1.25rem;
+            color: var(--text-secondary);
+            margin-bottom: 3rem;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            animation: fadeInUp 1s ease-out 0.2s both;
+        }
+
+        /* Download Section */
+        .download-section {
+            max-width: 500px;
+            margin: 0 auto 4rem;
+            animation: fadeInUp 1s ease-out 0.4s both;
+        }
+
+        .download-card {
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .input-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .input-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .password-input {
+            width: 100%;
+            padding: 1rem;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .password-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        .download-btn {
+            width: 100%;
+            padding: 1rem 2rem;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .download-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(99, 102, 241, 0.3);
+        }
+
+        .download-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Features Section */
+        .features {
+            padding: 4rem 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .features-title {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 3rem;
+            animation: fadeInUp 1s ease-out;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-bottom: 4rem;
+        }
+
+        .feature-card {
+            padding: 2rem;
+            text-align: center;
+            transition: transform 0.3s ease;
+            animation: fadeInUp 1s ease-out;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .feature-icon {
+            width: 60px;
+            height: 60px;
+            margin: 0 auto 1rem;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .feature-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .feature-description {
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        /* Instructions Section */
+        .instructions {
+            padding: 4rem 2rem;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .instructions-title {
+            text-align: center;
+            font-size: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .instructions-card {
+            padding: 2rem;
+        }
+
+        .step {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 2rem;
+            padding: 1rem;
+            border-radius: 12px;
+            background: var(--glass-bg);
+        }
+
+        .step-number {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 1rem;
+            flex-shrink: 0;
+        }
+
+        .step-content {
+            flex: 1;
+        }
+
+        .step-title {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .step-description {
+            color: var(--text-secondary);
+        }
+
+        /* FAQ Section */
+        .faq {
+            padding: 4rem 2rem;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .faq-title {
+            text-align: center;
+            font-size: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .faq-item {
+            margin-bottom: 1rem;
+        }
+
+        .faq-question {
+            width: 100%;
+            padding: 1rem;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: left;
+        }
+
+        .faq-question:hover {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .faq-answer {
+            padding: 1rem;
+            background: var(--glass-bg);
+            border-radius: 12px;
+            margin-top: 0.5rem;
+            display: none;
+            animation: fadeInUp 0.3s ease-out;
+        }
+
+        .faq-answer.active {
+            display: block;
+        }
+
+        /* Contact Section */
+        .contact {
+            padding: 4rem 2rem;
+            max-width: 600px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        .contact-title {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .contact-description {
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+        }
+
+        .contact-btn {
+            display: inline-block;
+            padding: 1rem 2rem;
+            background: linear-gradient(135deg, var(--accent-color), var(--primary-color));
+            color: white;
+            text-decoration: none;
+            border-radius: 12px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .contact-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(6, 182, 212, 0.3);
+        }
+
+        /* Footer */
+        .footer {
+            padding: 2rem;
+            text-align: center;
+            color: var(--text-secondary);
+            border-top: 1px solid var(--glass-border);
+        }
+
+        /* Toast Notifications */
+        .toast {
+            position: fixed;
+            top: 100px;
+            right: 2rem;
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            color: white;
+            font-weight: 600;
+            z-index: 2000;
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+        }
+
+        .toast.show {
+            transform: translateX(0);
+        }
+
+        .toast.success {
+            background: var(--success-color);
+        }
+
+        .toast.error {
+            background: var(--error-color);
+        }
+
+        .toast.warning {
+            background: var(--warning-color);
+        }
+
+        /* Loading Spinner */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .nav {
+                padding: 0 1rem;
+            }
+
+            .hero {
+                padding: 2rem 1rem;
+            }
+
+            .features, .instructions, .faq, .contact {
+                padding: 2rem 1rem;
+            }
+
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .step {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .step-number {
+                margin-right: 0;
+                margin-bottom: 1rem;
+            }
+        }
+
+        /* Hidden Admin Input */
+        .admin-input {
+            position: absolute;
+            left: -9999px;
+            opacity: 0;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <nav class="nav">
+            <div class="logo">LMS AI Assistant</div>
+            <button class="theme-toggle" onclick="toggleTheme()">
+                🌓
+            </button>
+        </nav>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main">
+        <!-- Hero Section -->
+        <section class="hero">
+            <h1 class="hero-title">Smart Learning Assistant</h1>
+            <p class="hero-subtitle">
+                Enhance your Learning Management System experience with our advanced AI assistant. 
+                Streamline your education workflow with intelligent automation and support.
+            </p>
+
+            <!-- Download Section -->
+            <div class="download-section">
+                <div class="download-card glass-strong">
+                    <div class="input-group">
+                        <label class="input-label" for="accessPassword">Access Password</label>
+                        <input type="password" id="accessPassword" class="password-input" placeholder="Enter access password">
+                        <input type="text" id="adminCheck" class="admin-input" placeholder="Type admin for admin access">
+                    </div>
+                    <button class="download-btn" onclick="handleDownload()">
+                        <span id="downloadText">Download ScriptCat Script</span>
+                        <span id="downloadLoader" class="loading" style="display: none;"></span>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Features Section -->
+        <section class="features">
+            <h2 class="features-title">Key Features</h2>
+            <div class="features-grid">
+                <div class="feature-card glass">
+                    <div class="feature-icon">🤖</div>
+                    <h3 class="feature-title">AI-Powered Assistance</h3>
+                    <p class="feature-description">
+                        Intelligent automation for common LMS tasks with advanced natural language processing.
+                    </p>
+                </div>
+                <div class="feature-card glass">
+                    <div class="feature-icon">🔐</div>
+                    <h3 class="feature-title">Secure Access</h3>
+                    <p class="feature-description">
+                        Enterprise-grade security with manual approval system and device-based authentication.
+                    </p>
+                </div>
+                <div class="feature-card glass">
+                    <div class="feature-icon">⚡</div>
+                    <h3 class="feature-title">Fast Performance</h3>
+                    <p class="feature-description">
+                        Optimized scripts with minimal resource usage and lightning-fast response times.
+                    </p>
+                </div>
+                <div class="feature-card glass">
+                    <div class="feature-icon">📱</div>
+                    <h3 class="feature-title">Cross-Platform</h3>
+                    <p class="feature-description">
+                        Works seamlessly across all major browsers and operating systems.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Instructions Section -->
+        <section class="instructions">
+            <h2 class="instructions-title">Installation Instructions</h2>
+            <div class="instructions-card glass">
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <h3 class="step-title">Install ScriptCat Extension</h3>
+                        <p class="step-description">
+                            Download and install the ScriptCat browser extension from your browser's extension store.
+                        </p>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <h3 class="step-title">Enter Access Password</h3>
+                        <p class="step-description">
+                            Enter the provided access password in the field above to unlock the download.
+                        </p>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <h3 class="step-title">Download and Install Script</h3>
+                        <p class="step-description">
+                            Click the download button to get the authorization script and install it in ScriptCat.
+                        </p>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-number">4</div>
+                    <div class="step-content">
+                        <h3 class="step-title">Complete Registration</h3>
+                        <p class="step-description">
+                            Follow the registration dialog to submit your access request for manual approval.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- FAQ Section -->
+        <section class="faq">
+            <h2 class="faq-title">Frequently Asked Questions</h2>
+            <div class="faq-item">
+                <button class="faq-question" onclick="toggleFaq(this)">
+                    What is the LMS AI Assistant?
+                </button>
+                <div class="faq-answer">
+                    <p>The LMS AI Assistant is an advanced browser script that enhances your Learning Management System experience with AI-powered automation, intelligent task assistance, and streamlined workflows.</p>
+                </div>
+            </div>
+            <div class="faq-item">
+                <button class="faq-question" onclick="toggleFaq(this)">
+                    How does the approval process work?
+                </button>
+                <div class="faq-answer">
+                    <p>After installing the script, you'll complete a registration form. Your request is then manually reviewed by our administrators. Once approved, you'll automatically receive access to the full AI assistant features.</p>
+                </div>
+            </div>
+            <div class="faq-item">
+                <button class="faq-question" onclick="toggleFaq(this)">
+                    Is my data secure?
+                </button>
+                <div class="faq-answer">
+                    <p>Yes, we implement enterprise-grade security measures including device-based authentication, encrypted communications, and strict access controls. Your privacy and data security are our top priorities.</p>
+                </div>
+            </div>
+            <div class="faq-item">
+                <button class="faq-question" onclick="toggleFaq(this)">
+                    What browsers are supported?
+                </button>
+                <div class="faq-answer">
+                    <p>Our system works with all major modern browsers including Chrome, Firefox, Edge, and Safari. You'll need to install the ScriptCat extension for your specific browser.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Contact Section -->
+        <section class="contact">
+            <h2 class="contact-title">Need Help?</h2>
+            <p class="contact-description">
+                Have questions or need technical support? Our development team is here to help.
+            </p>
+            <a href="mailto:support@wrongnumber.netlify.app" class="contact-btn">Contact Developer</a>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p>&copy; 2024 LMS AI Assistant. All rights reserved.</p>
+    </footer>
+
+    <!-- Toast Container -->
+    <div id="toastContainer"></div>
+
+    <script>
+        // Global Variables
+        let currentTheme = localStorage.getItem('theme') || 'dark';
+        let isDownloading = false;
+
+        // Initialize App
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeTheme();
+            setupEventListeners();
+            checkAdminAccess();
+        });
+
+        // Theme Management
+        function initializeTheme() {
+            document.documentElement.setAttribute('data-theme', currentTheme);
+        }
+
+        function toggleTheme() {
+            currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', currentTheme);
+            localStorage.setItem('theme', currentTheme);
+            showToast('Theme changed to ' + currentTheme + ' mode', 'success');
+        }
+
+        // Event Listeners
+        function setupEventListeners() {
+            const passwordInput = document.getElementById('accessPassword');
+            const adminInput = document.getElementById('adminCheck');
+
+            passwordInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    handleDownload();
+                }
+            });
+
+            // Hidden admin check
+            passwordInput.addEventListener('input', function(e) {
+                if (e.target.value.toLowerCase() === 'admin') {
+                    adminInput.style.display = 'block';
+                    adminInput.focus();
+                    e.target.value = '';
+                }
+            });
+
+            adminInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    window.location.href = '/admin.html';
+                }
+            });
+        }
+
+        // Check for admin access
+        function checkAdminAccess() {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('admin') === 'true') {
+                window.location.href = '/admin.html';
+            }
+        }
+
+        // Download Handler
+        async function handleDownload() {
+            if (isDownloading) return;
+
+            const password = document.getElementById('accessPassword').value.trim();
+            const downloadBtn = document.querySelector('.download-btn');
+            const downloadText = document.getElementById('downloadText');
+            const downloadLoader = document.getElementById('downloadLoader');
+
+            if (!password) {
+                showToast('Please enter the access password', 'error');
+                return;
+            }
+
+            try {
+                isDownloading = true;
+                downloadBtn.disabled = true;
+                downloadText.style.display = 'none';
+                downloadLoader.style.display = 'inline-block';
+
+                // Validate password with server
+                const response = await fetch('/.netlify/functions/validate-access', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify({
+                        password: password,
+                        timestamp: Date.now(),
+                        userAgent: navigator.userAgent,
+                        referrer: document.referrer
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    // Generate and download the ScriptCat script
+                    await downloadScript(result.token);
+                    showToast('Script downloaded successfully!', 'success');
+                } else {
+                    showToast(result.message || 'Invalid access password', 'error');
+                }
+
+            } catch (error) {
+                console.error('Download error:', error);
+                showToast('Download failed. Please try again.', 'error');
+            } finally {
+                isDownloading = false;
+                downloadBtn.disabled = false;
+                downloadText.style.display = 'inline-block';
+                downloadLoader.style.display = 'none';
+            }
+        }
+
+        // Generate and download ScriptCat script
+        async function downloadScript(token) {
+            const scriptContent = generateScriptContent(token);
+            const blob = new Blob([scriptContent], { type: 'text/javascript' });
+            const url = URL.createObjectURL(blob);
+            
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'lms-ai-assistant.user.js';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        // Generate ScriptCat userscript content
+        function generateScriptContent(token) {
+            return `// ==UserScript==
+// @name         LMS AI Assistant Authorization
+// @namespace    https://wrongnumber.netlify.app/
+// @version      1.0.0
+// @description  AI Assistant for Learning Management Systems
+// @author       LMS AI Team
+// @match        https://*.edu/*
+// @match        https://*.edu.au/*
+// @match        https://*.ac.uk/*
+// @match        https://canvas.*/*
+// @match        https://blackboard.*/*
+// @match        https://moodle.*/*
+// @match        https://brightspace.*/*
+// @grant        GM_xmlhttpRequest
+// @grant        GM_setValue
+// @grant        GM_getValue
+// @grant        GM_deleteValue
+// @grant        GM_listValues
+// @run-at       document-end
+// @updateURL    https://wrongnumber.netlify.app/script/lms-ai-assistant.user.js
+// @downloadURL  https://wrongnumber.netlify.app/script/lms-ai-assistant.user.js
+// ==/UserScript==
+
+(function() {
+    'use strict';
+    
+    // Configuration
+    const CONFIG = {
+        API_BASE: 'https://wrongnumber.netlify.app/.netlify/functions/',
+        SCRIPT_URL: 'https://wrongnumber.netlify.app/loader.js',
+        TOKEN: '${token}',
+        VERSION: '1.0.0'
+    };
+    
+    // Device fingerprinting
+    function generateHWID() {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        ctx.textBaseline = 'top';
+        ctx.font = '14px Arial';
+        ctx.fillText('Device fingerprint', 2, 2);
+        
+        const fingerprint = [
+            navigator.userAgent,
+            navigator.language,
+            screen.width + 'x' + screen.height,
+            new Date().getTimezoneOffset(),
+            canvas.toDataURL(),
+            navigator.hardwareConcurrency || 'unknown',
+            navigator.deviceMemory || 'unknown'
+        ].join('|');
+        
+        // Simple hash function
+        let hash = 0;
+        for (let i = 0; i < fingerprint.length; i++) {
+            const char = fingerprint.charCodeAt(i);
+            hash = ((hash << 5) - hash) + char;
+            hash = hash & hash;
+        }
+        return Math.abs(hash).toString(36);
+    }
+    
+    // Check if user is registered
+    function checkRegistration() {
+        const hwid = generateHWID();
+        const registered = GM_getValue('user_registered', false);
+        const storedHwid = GM_getValue('device_hwid', '');
+        
+        if (!registered || storedHwid !== hwid) {
+            showRegistrationDialog(hwid);
+            return false;
+        }
+        
+        return true;
+    }
+    
+    // Registration dialog
+    function showRegistrationDialog(hwid) {
+        const overlay = document.createElement('div');
+        overlay.style.cssText = \`
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 999999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Segoe UI', sans-serif;
+        \`;
+        
+        const dialog = document.createElement('div');
+        dialog.style.cssText = \`
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            padding: 2rem;
+            border-radius: 16px;
+            color: white;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        \`;
+        
+        dialog.innerHTML = \`
+            <h2 style="margin-bottom: 1rem; color: #6366f1;">LMS AI Assistant Registration</h2>
+            <p style="margin-bottom: 1.5rem; opacity: 0.8;">Please enter your name to request access:</p>
+            <input type="text" id="userName" placeholder="Enter your full name" style="
+                width: 100%;
+                padding: 0.75rem;
+                margin-bottom: 1rem;
+                border: 1px solid rgba(255, 255, 255, 0.2);
+                border-radius: 8px;
+                background: rgba(255, 255, 255, 0.1);
+                color: white;
+                font-size: 1rem;
+            ">
+            <div style="display: flex; gap: 1rem;">
+                <button id="submitRequest" style="
+                  flex: 1;
+                   padding: 0.75rem;
+                   background: linear-gradient(135deg, #6366f1, #8b5cf6);
+                   border: none;
+                   border-radius: 8px;
+                   color: white;
+                   font-weight: 600;
+                   cursor: pointer;
+                   transition: all 0.3s ease;
+               ">Submit Request</button>
+               <button id="cancelRequest" style="
+                   flex: 1;
+                   padding: 0.75rem;
+                   background: transparent;
+                   border: 1px solid rgba(255, 255, 255, 0.2);
+                   border-radius: 8px;
+                   color: white;
+                   font-weight: 600;
+                   cursor: pointer;
+                   transition: all 0.3s ease;
+               ">Cancel</button>
+           </div>
+       `;
+       
+       overlay.appendChild(dialog);
+       document.body.appendChild(overlay);
+       
+       document.getElementById('userName').focus();
+       
+       document.getElementById('submitRequest').onclick = () => {
+           const name = document.getElementById('userName').value.trim();
+           if (name) {
+               submitRegistrationRequest(name, hwid);
+               document.body.removeChild(overlay);
+           } else {
+               alert('Please enter your name');
+           }
+       };
+       
+       document.getElementById('cancelRequest').onclick = () => {
+           document.body.removeChild(overlay);
+       };
+   }
+   
+   // Submit registration request
+   function submitRegistrationRequest(name, hwid) {
+       GM_xmlhttpRequest({
+           method: 'POST',
+           url: CONFIG.API_BASE + 'register-user',
+           headers: {
+               'Content-Type': 'application/json',
+               'X-Auth-Token': CONFIG.TOKEN
+           },
+           data: JSON.stringify({
+               name: name,
+               hwid: hwid,
+               userAgent: navigator.userAgent,
+               timestamp: Date.now(),
+               url: window.location.href
+           }),
+           onload: function(response) {
+               if (response.status === 200) {
+                   const result = JSON.parse(response.responseText);
+                   if (result.success) {
+                       alert('Registration request submitted successfully! Please wait for admin approval.');
+                       GM_setValue('registration_pending', true);
+                       GM_setValue('device_hwid', hwid);
+                   } else {
+                       alert('Registration failed: ' + result.message);
+                   }
+               } else {
+                   alert('Registration failed. Please try again later.');
+               }
+           },
+           onerror: function() {
+               alert('Network error. Please check your connection and try again.');
+           }
+       });
+   }
+   
+   // Check approval status
+   function checkApprovalStatus(hwid) {
+       GM_xmlhttpRequest({
+           method: 'POST',
+           url: CONFIG.API_BASE + 'check-approval',
+           headers: {
+               'Content-Type': 'application/json',
+               'X-Auth-Token': CONFIG.TOKEN
+           },
+           data: JSON.stringify({
+               hwid: hwid,
+               timestamp: Date.now()
+           }),
+           onload: function(response) {
+               if (response.status === 200) {
+                   const result = JSON.parse(response.responseText);
+                   if (result.approved) {
+                       GM_setValue('user_registered', true);
+                       GM_setValue('user_approved', true);
+                       GM_deleteValue('registration_pending');
+                       loadMainScript();
+                   }
+               }
+           }
+       });
+   }
+   
+   // Load main AI script
+   function loadMainScript() {
+       GM_xmlhttpRequest({
+           method: 'GET',
+           url: CONFIG.SCRIPT_URL,
+           headers: {
+               'X-Auth-Token': CONFIG.TOKEN,
+               'X-Device-ID': GM_getValue('device_hwid', ''),
+               'X-Timestamp': Date.now().toString()
+           },
+           onload: function(response) {
+               if (response.status === 200) {
+                   try {
+                       eval(response.responseText);
+                   } catch (error) {
+                       console.error('LMS AI Assistant: Script execution error:', error);
+                   }
+               } else {
+                   console.error('LMS AI Assistant: Failed to load main script');
+               }
+           },
+           onerror: function() {
+               console.error('LMS AI Assistant: Network error loading main script');
+           }
+       });
+   }
+   
+   // Main initialization
+   function initialize() {
+       const hwid = generateHWID();
+       const isRegistered = GM_getValue('user_registered', false);
+       const isApproved = GM_getValue('user_approved', false);
+       const isPending = GM_getValue('registration_pending', false);
+       
+       if (isRegistered && isApproved) {
+           loadMainScript();
+       } else if (isPending) {
+           // Check approval status periodically
+           checkApprovalStatus(hwid);
+           setInterval(() => checkApprovalStatus(hwid), 30000); // Check every 30 seconds
+       } else {
+           checkRegistration();
+       }
+   }
+   
+   // Start the application
+   if (document.readyState === 'loading') {
+       document.addEventListener('DOMContentLoaded', initialize);
+   } else {
+       initialize();
+   }
+})();`;
+       }
+
+       // FAQ Toggle
+       function toggleFaq(button) {
+           const answer = button.nextElementSibling;
+           const isActive = answer.classList.contains('active');
+           
+           // Close all FAQ answers
+           document.querySelectorAll('.faq-answer').forEach(ans => {
+               ans.classList.remove('active');
+           });
+           
+           // Toggle current answer
+           if (!isActive) {
+               answer.classList.add('active');
+           }
+       }
+
+       // Toast Notifications
+       function showToast(message, type = 'info') {
+           const toast = document.createElement('div');
+           toast.className = `toast ${type}`;
+           toast.textContent = message;
+           
+           document.getElementById('toastContainer').appendChild(toast);
+           
+           setTimeout(() => {
+               toast.classList.add('show');
+           }, 100);
+           
+           setTimeout(() => {
+               toast.classList.remove('show');
+               setTimeout(() => {
+                   if (toast.parentNode) {
+                       toast.parentNode.removeChild(toast);
+                   }
+               }, 300);
+           }, 3000);
+       }
+
+       // Service Worker Registration (PWA)
+       if ('serviceWorker' in navigator) {
+           window.addEventListener('load', function() {
+               navigator.serviceWorker.register('/sw.js')
+                   .then(function(registration) {
+                       console.log('ServiceWorker registration successful');
+                   })
+                   .catch(function(err) {
+                       console.log('ServiceWorker registration failed: ', err);
+                   });
+           });
+       }
+
+       // Prevent right-click (optional security measure)
+       document.addEventListener('contextmenu', function(e) {
+           if (!e.target.closest('.admin-input')) {
+               e.preventDefault();
+           }
+       });
+
+       // Disable F12 and other dev tools shortcuts (optional security measure)
+       document.addEventListener('keydown', function(e) {
+           if (e.key === 'F12' || 
+               (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'C' || e.key === 'J')) ||
+               (e.ctrlKey && e.key === 'U')) {
+               e.preventDefault();
+               showToast('Developer tools are disabled', 'warning');
+           }
+       });
+   </script>
+</body>
+</html>

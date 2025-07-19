@@ -1,0 +1,3813 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LMS AI Assistant - Admin Panel</title>
+    <meta name="description" content="Administrative control panel for LMS AI Assistant">
+    
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#1a1a2e">
+    <link rel="manifest" href="/manifest.json">
+    
+    <!-- Icons -->
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-color: #6366f1;
+            --secondary-color: #8b5cf6;
+            --accent-color: #06b6d4;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --error-color: #ef4444;
+            --info-color: #3b82f6;
+            
+            --background-dark: #0f0f23;
+            --background-light: #1a1a2e;
+            --surface-dark: #16213e;
+            --surface-light: #1e293b;
+            
+            --text-primary: #ffffff;
+            --text-secondary: #a1a1aa;
+            --text-muted: #6b7280;
+            
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --glass-strong: rgba(255, 255, 255, 0.1);
+            
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+
+        [data-theme="light"] {
+            --background-dark: #f8fafc;
+            --background-light: #ffffff;
+            --surface-dark: #f1f5f9;
+            --surface-light: #e2e8f0;
+            --text-primary: #1e293b;
+            --text-secondary: #475569;
+            --text-muted: #64748b;
+            --glass-bg: rgba(0, 0, 0, 0.05);
+            --glass-border: rgba(0, 0, 0, 0.1);
+            --glass-strong: rgba(0, 0, 0, 0.1);
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--background-dark) 0%, var(--background-light) 100%);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Glassmorphism Effects */
+        .glass {
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+        }
+
+        .glass-strong {
+            background: var(--glass-strong);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+        }
+
+        /* Login Screen Styles */
+        .login-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, var(--background-dark) 0%, var(--background-light) 100%);
+            z-index: 10000;
+        }
+
+        .login-card {
+            max-width: 400px;
+            width: 90%;
+            padding: 2.5rem;
+            text-align: center;
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        .login-logo {
+            font-size: 2rem;
+            font-weight: bold;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.5rem;
+        }
+
+        .login-title {
+            font-size: 1.5rem;
+            margin-bottom: 2rem;
+            color: var(--text-primary);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+            text-align: left;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 1rem;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        .form-input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 1rem;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(99, 102, 241, 0.3);
+        }
+
+        .login-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .two-factor-container {
+            display: none;
+            margin-top: 1rem;
+        }
+
+        .backup-codes {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: var(--glass-bg);
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+
+        /* Main Admin Layout */
+        .admin-layout {
+            display: none;
+            min-height: 100vh;
+        }
+
+        .admin-layout.active {
+            display: flex;
+        }
+
+        /* Header */
+        .admin-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 70px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--glass-border);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 2rem;
+        }
+
+        .admin-logo {
+            font-size: 1.25rem;
+            font-weight: bold;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .admin-user {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .user-avatar {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+
+        .user-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .user-name {
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .user-role {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .header-btn {
+            padding: 0.5rem;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .header-btn:hover {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        /* Sidebar */
+        .admin-sidebar {
+            position: fixed;
+            top: 70px;
+            left: 0;
+            width: 280px;
+            height: calc(100vh - 70px);
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border-right: 1px solid var(--glass-border);
+            padding: 2rem 0;
+            overflow-y: auto;
+            z-index: 900;
+            transition: transform 0.3s ease;
+        }
+
+        .sidebar-nav {
+            list-style: none;
+        }
+
+        .nav-item {
+            margin-bottom: 0.5rem;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            padding: 1rem 2rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            border-left: 3px solid transparent;
+        }
+
+        .nav-link:hover {
+            background: var(--glass-bg);
+            color: var(--text-primary);
+            border-left-color: var(--primary-color);
+        }
+
+        .nav-link.active {
+            background: var(--glass-strong);
+            color: var(--primary-color);
+            border-left-color: var(--primary-color);
+        }
+
+        .nav-icon {
+            margin-right: 1rem;
+            font-size: 1.2rem;
+        }
+
+        .nav-text {
+            font-weight: 500;
+        }
+
+        .nav-badge {
+            margin-left: auto;
+            background: var(--error-color);
+            color: white;
+            padding: 0.2rem 0.5rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: bold;
+        }
+
+        /* Main Content */
+        .admin-main {
+            margin-left: 280px;
+            margin-top: 70px;
+            padding: 2rem;
+            min-height: calc(100vh - 70px);
+            transition: margin-left 0.3s ease;
+        }
+
+        .page-header {
+            margin-bottom: 2rem;
+        }
+
+        .page-title {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .page-subtitle {
+            color: var(--text-secondary);
+            font-size: 1rem;
+        }
+
+        .page-actions {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        /* Content Sections */
+        .content-section {
+            display: none;
+        }
+
+        .content-section.active {
+            display: block;
+            animation: fadeInUp 0.4s ease-out;
+        }
+
+        /* Cards */
+        .card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        .card-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+/* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            gap: 0.5rem;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.3);
+        }
+
+        .btn-success {
+            background: var(--success-color);
+            color: white;
+        }
+
+        .btn-success:hover:not(:disabled) {
+            background: #059669;
+            transform: translateY(-1px);
+        }
+
+        .btn-danger {
+            background: var(--error-color);
+            color: white;
+        }
+
+        .btn-danger:hover:not(:disabled) {
+            background: #dc2626;
+            transform: translateY(-1px);
+        }
+
+        .btn-warning {
+            background: var(--warning-color);
+            color: white;
+        }
+
+        .btn-warning:hover:not(:disabled) {
+            background: #d97706;
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: var(--glass-bg);
+            color: var(--text-primary);
+            border: 1px solid var(--glass-border);
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background: var(--glass-strong);
+        }
+
+        .btn-sm {
+            padding: 0.5rem 1rem;
+            font-size: 0.8rem;
+        }
+
+        .btn-lg {
+            padding: 1rem 2rem;
+            font-size: 1.1rem;
+        }
+
+        .btn-icon {
+            padding: 0.75rem;
+            border-radius: 50%;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 1.5rem;
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .stat-icon {
+            width: 60px;
+            height: 60px;
+            margin: 0 auto 1rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: white;
+        }
+
+        .stat-icon.primary {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        }
+
+        .stat-icon.success {
+            background: linear-gradient(135deg, var(--success-color), #059669);
+        }
+
+        .stat-icon.warning {
+            background: linear-gradient(135deg, var(--warning-color), #d97706);
+        }
+
+        .stat-icon.danger {
+            background: linear-gradient(135deg, var(--error-color), #dc2626);
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .stat-change {
+            font-size: 0.8rem;
+            margin-top: 0.5rem;
+        }
+
+        .stat-change.positive {
+            color: var(--success-color);
+        }
+
+        .stat-change.negative {
+            color: var(--error-color);
+        }
+
+        /* Tables */
+        .table-container {
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            overflow: hidden;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .table th {
+            background: var(--glass-strong);
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: var(--text-primary);
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .table td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--glass-border);
+            color: var(--text-secondary);
+        }
+
+        .table tbody tr:hover {
+            background: var(--glass-bg);
+        }
+
+        .table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* Status Badges */
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-badge.pending {
+            background: rgba(251, 191, 36, 0.2);
+            color: var(--warning-color);
+        }
+
+        .status-badge.approved {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--success-color);
+        }
+
+        .status-badge.denied {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--error-color);
+        }
+
+        .status-badge.active {
+            background: rgba(59, 130, 246, 0.2);
+            color: var(--info-color);
+        }
+
+        .status-badge.inactive {
+            background: rgba(107, 114, 128, 0.2);
+            color: var(--text-muted);
+        }
+
+        /* Forms */
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .form-col {
+            flex: 1;
+        }
+
+        .form-textarea {
+            width: 100%;
+            min-height: 120px;
+            padding: 1rem;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-size: 1rem;
+            font-family: inherit;
+            resize: vertical;
+            transition: all 0.3s ease;
+        }
+
+        .form-textarea:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        .form-select {
+            width: 100%;
+            padding: 1rem;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .form-select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        .form-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .form-checkbox input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--primary-color);
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal {
+            background: var(--surface-dark);
+            border-radius: 16px;
+            padding: 2rem;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            transform: scale(0.9);
+            transition: transform 0.3s ease;
+        }
+
+        .modal-overlay.active .modal {
+            transform: scale(1);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .modal-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0.25rem;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+
+        .modal-close:hover {
+            background: var(--glass-bg);
+            color: var(--text-primary);
+        }
+
+        .modal-body {
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--glass-border);
+        }
+
+        /* Toast Notifications */
+        .toast-container {
+            position: fixed;
+            top: 100px;
+            right: 2rem;
+            z-index: 11000;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .toast {
+            background: var(--surface-dark);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 1rem 1.5rem;
+            min-width: 300px;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .toast.show {
+            transform: translateX(0);
+        }
+
+        .toast-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+
+        .toast.success .toast-icon {
+            background: var(--success-color);
+        }
+
+        .toast.error .toast-icon {
+            background: var(--error-color);
+        }
+
+        .toast.warning .toast-icon {
+            background: var(--warning-color);
+        }
+
+        .toast.info .toast-icon {
+            background: var(--info-color);
+        }
+
+        .toast-content {
+            flex: 1;
+        }
+
+        .toast-title {
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .toast-message {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .toast-close {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 0.25rem;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+
+        .toast-close:hover {
+            background: var(--glass-bg);
+            color: var(--text-primary);
+        }
+
+        /* Loading States */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: inherit;
+            z-index: 100;
+        }
+
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: var(--primary-color);
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        /* Progress Bar */
+        .progress {
+            width: 100%;
+            height: 8px;
+            background: var(--glass-bg);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+
+        /* Pagination */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 2rem;
+        }
+
+        .pagination-btn {
+            padding: 0.5rem 1rem;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .pagination-btn:hover:not(:disabled) {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .pagination-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .pagination-btn.active {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        /* Search and Filters */
+        .search-filters {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .search-input {
+            flex: 1;
+            min-width: 250px;
+            padding: 0.75rem 1rem;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        .filter-select {
+            padding: 0.75rem 1rem;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .filter-select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+/* Responsive Design */
+        @media (max-width: 1200px) {
+            .admin-sidebar {
+                width: 250px;
+            }
+            
+            .admin-main {
+                margin-left: 250px;
+            }
+        }
+
+        @media (max-width: 968px) {
+            .admin-sidebar {
+                transform: translateX(-100%);
+            }
+            
+            .admin-sidebar.active {
+                transform: translateX(0);
+            }
+            
+            .admin-main {
+                margin-left: 0;
+            }
+            
+            .admin-header {
+                padding: 0 1rem;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            }
+            
+            .search-filters {
+                flex-direction: column;
+            }
+            
+            .search-input {
+                min-width: auto;
+            }
+            
+            .page-actions {
+                flex-direction: column;
+            }
+            
+            .form-row {
+                flex-direction: column;
+            }
+            
+            .modal {
+                width: 95%;
+                margin: 1rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .admin-header {
+                height: 60px;
+            }
+            
+            .admin-sidebar {
+                top: 60px;
+                height: calc(100vh - 60px);
+            }
+            
+            .admin-main {
+                margin-top: 60px;
+                padding: 1rem;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .table-container {
+                overflow-x: auto;
+            }
+            
+            .table {
+                min-width: 600px;
+            }
+            
+            .toast-container {
+                right: 1rem;
+                left: 1rem;
+            }
+            
+            .toast {
+                min-width: auto;
+            }
+            
+            .card {
+                padding: 1rem;
+            }
+            
+            .admin-user {
+                display: none;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .admin-header {
+                padding: 0 0.5rem;
+            }
+            
+            .admin-main {
+                padding: 0.5rem;
+            }
+            
+            .page-title {
+                font-size: 1.5rem;
+            }
+            
+            .stat-card {
+                padding: 1rem;
+            }
+            
+            .stat-icon {
+                width: 50px;
+                height: 50px;
+                font-size: 1.2rem;
+            }
+            
+            .stat-value {
+                font-size: 1.5rem;
+            }
+            
+            .btn {
+                padding: 0.5rem 1rem;
+                font-size: 0.8rem;
+            }
+            
+            .modal {
+                padding: 1.5rem;
+            }
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideInRight {
+            from {
+                transform: translateX(100%);
+            }
+            to {
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes slideInLeft {
+            from {
+                transform: translateX(-100%);
+            }
+            to {
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        @keyframes bounce {
+            0%, 20%, 53%, 80%, 100% {
+                transform: translate3d(0, 0, 0);
+            }
+            40%, 43% {
+                transform: translate3d(0, -30px, 0);
+            }
+            70% {
+                transform: translate3d(0, -15px, 0);
+            }
+            90% {
+                transform: translate3d(0, -4px, 0);
+            }
+        }
+
+        /* Animation Classes */
+        .animate-fadeIn {
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .animate-fadeInUp {
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        .animate-slideInRight {
+            animation: slideInRight 0.3s ease-out;
+        }
+
+        .animate-slideInLeft {
+            animation: slideInLeft 0.3s ease-out;
+        }
+
+        .animate-pulse {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        .animate-bounce {
+            animation: bounce 1s infinite;
+        }
+
+        /* Transition Classes */
+        .transition-all {
+            transition: all 0.3s ease;
+        }
+
+        .transition-colors {
+            transition: color 0.3s ease, background-color 0.3s ease, border-color 0.3s ease;
+        }
+
+        .transition-transform {
+            transition: transform 0.3s ease;
+        }
+
+        /* Hover Effects */
+        .hover-scale:hover {
+            transform: scale(1.05);
+        }
+
+        .hover-lift:hover {
+            transform: translateY(-2px);
+        }
+
+        .hover-glow:hover {
+            box-shadow: 0 0 20px rgba(99, 102, 241, 0.3);
+        }
+
+        /* Focus States */
+        .focus-ring:focus {
+            outline: 2px solid var(--primary-color);
+            outline-offset: 2px;
+        }
+
+        /* Dark Mode Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--glass-bg);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--glass-border);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--primary-color);
+        }
+
+        /* Selection */
+        ::selection {
+            background: rgba(99, 102, 241, 0.3);
+        }
+
+        /* Chart Styles */
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin: 1rem 0;
+        }
+
+        .chart-legend {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-top: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .chart-legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .chart-legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 2px;
+        }
+
+        .chart-legend-label {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        /* Activity Feed */
+        .activity-feed {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .activity-item {
+            display: flex;
+            gap: 1rem;
+            padding: 1rem 0;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .activity-item:last-child {
+            border-bottom: none;
+        }
+
+        .activity-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+
+        .activity-content {
+            flex: 1;
+        }
+
+        .activity-title {
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .activity-description {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .activity-time {
+            color: var(--text-muted);
+            font-size: 0.8rem;
+        }
+
+        /* File Upload */
+        .file-upload {
+            border: 2px dashed var(--glass-border);
+            border-radius: 12px;
+            padding: 2rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .file-upload:hover {
+            border-color: var(--primary-color);
+            background: var(--glass-bg);
+        }
+
+        .file-upload.dragover {
+            border-color: var(--primary-color);
+            background: rgba(99, 102, 241, 0.1);
+        }
+
+        .file-upload-icon {
+            font-size: 3rem;
+            color: var(--text-muted);
+            margin-bottom: 1rem;
+        }
+
+        .file-upload-text {
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+        }
+
+        .file-upload-hint {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .file-list {
+            margin-top: 1rem;
+        }
+
+        .file-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.75rem;
+            background: var(--glass-bg);
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+        }
+
+        .file-info {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .file-icon {
+            color: var(--primary-color);
+        }
+
+        .file-name {
+            font-weight: 500;
+        }
+
+        .file-size {
+            color: var(--text-muted);
+            font-size: 0.8rem;
+        }
+
+        .file-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        /* Code Block */
+        .code-block {
+            background: var(--surface-dark);
+            border: 1px solid var(--glass-border);
+            border-radius: 8px;
+            padding: 1rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+        }
+
+        .code-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .code-language {
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        .code-copy {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 4px;
+            padding: 0.25rem 0.5rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: all 0.3s ease;
+        }
+
+        .code-copy:hover {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        /* Tabs */
+        .tabs {
+            margin-bottom: 2rem;
+        }
+
+        .tab-list {
+            display: flex;
+            border-bottom: 1px solid var(--glass-border);
+            margin-bottom: 1.5rem;
+        }
+
+        .tab-button {
+            padding: 1rem 1.5rem;
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-weight: 500;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .tab-button:hover {
+            color: var(--text-primary);
+        }
+
+        .tab-button.active {
+            color: var(--primary-color);
+            border-bottom-color: var(--primary-color);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeInUp 0.3s ease-out;
+        }
+
+        /* Mobile Menu Button */
+        .mobile-menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            color: var(--text-primary);
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .mobile-menu-btn:hover {
+            background: var(--glass-bg);
+        }
+
+        @media (max-width: 968px) {
+            .mobile-menu-btn {
+                display: block;
+            }
+        }
+
+        /* Sidebar Overlay for Mobile */
+        .sidebar-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 850;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* Print Styles */
+        @media print {
+            .admin-sidebar,
+            .admin-header,
+            .page-actions,
+            .btn,
+            .toast-container,
+            .modal-overlay {
+                display: none !important;
+            }
+            
+            .admin-main {
+                margin-left: 0 !important;
+                margin-top: 0 !important;
+            }
+            
+            .card {
+                border: 1px solid #000;
+                break-inside: avoid;
+            }
+            
+            .table {
+                border-collapse: collapse;
+            }
+            
+            .table th,
+            .table td {
+                border: 1px solid #000;
+            }
+        }
+
+        /* Accessibility */
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+
+        /* High contrast mode support */
+        @media (prefers-contrast: high) {
+            :root {
+                --glass-bg: rgba(255, 255, 255, 0.1);
+                --glass-border: rgba(255, 255, 255, 0.3);
+            }
+            
+            .btn {
+                border: 2px solid currentColor;
+            }
+        }
+
+        /* Reduced motion support */
+        @media (prefers-reduced-motion: reduce) {
+            *,
+            *::before,
+            *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+    </style>
+</head>
+<body>
+<!-- Login Screen -->
+    <div id="loginContainer" class="login-container">
+        <div class="login-card glass-strong">
+            <div class="login-logo">🛡️ Admin Panel</div>
+            <h1 class="login-title">Secure Access</h1>
+            
+            <form id="loginForm">
+                <div class="form-group">
+                    <label class="form-label" for="adminPassword">Administrator Password</label>
+                    <input type="password" id="adminPassword" class="form-input" placeholder="Enter admin password" required>
+                </div>
+                
+                <div class="two-factor-container" id="twoFactorContainer">
+                    <div class="form-group">
+                        <label class="form-label" for="twoFactorCode">Two-Factor Authentication Code</label>
+                        <input type="text" id="twoFactorCode" class="form-input" placeholder="Enter 6-digit code" maxlength="6">
+                    </div>
+                    
+                    <div class="backup-codes" id="backupCodes" style="display: none;">
+                        <strong>Backup Codes:</strong><br>
+                        <span id="backupCodesList"></span>
+                    </div>
+                </div>
+                
+                <button type="submit" class="login-btn" id="loginBtn">
+                    <span id="loginText">Sign In</span>
+                    <span id="loginLoader" class="loading" style="display: none;"></span>
+                </button>
+            </form>
+            
+            <div style="margin-top: 1rem; text-align: center;">
+                <button type="button" class="btn btn-secondary btn-sm" onclick="toggleTheme()">
+                    🌓 Toggle Theme
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Admin Layout -->
+    <div id="adminLayout" class="admin-layout">
+        <!-- Header -->
+        <header class="admin-header">
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <button class="mobile-menu-btn" onclick="toggleSidebar()">
+                    ☰
+                </button>
+                <div class="admin-logo">🤖 LMS AI Admin</div>
+            </div>
+            
+            <div class="admin-user">
+                <div class="user-avatar" id="userAvatar">A</div>
+                <div class="user-info">
+                    <div class="user-name" id="userName">Administrator</div>
+                    <div class="user-role">System Admin</div>
+                </div>
+            </div>
+            
+            <div class="header-actions">
+                <button class="header-btn" onclick="showNotifications()" title="Notifications">
+                    🔔
+                    <span id="notificationBadge" class="nav-badge" style="display: none;">0</span>
+                </button>
+                <button class="header-btn" onclick="toggleTheme()" title="Toggle Theme">
+                    🌓
+                </button>
+                <button class="header-btn" onclick="showSettings()" title="Settings">
+                    ⚙️
+                </button>
+                <button class="header-btn" onclick="logout()" title="Logout">
+                    🚪
+                </button>
+            </div>
+        </header>
+
+        <!-- Sidebar -->
+        <nav class="admin-sidebar" id="adminSidebar">
+            <ul class="sidebar-nav">
+                <li class="nav-item">
+                    <a href="#" class="nav-link active" onclick="showSection('dashboard')" data-section="dashboard">
+                        <span class="nav-icon">📊</span>
+                        <span class="nav-text">Dashboard</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link" onclick="showSection('pending')" data-section="pending">
+                        <span class="nav-icon">⏳</span>
+                        <span class="nav-text">Pending Requests</span>
+                        <span class="nav-badge" id="pendingBadge">0</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link" onclick="showSection('users')" data-section="users">
+                        <span class="nav-icon">👥</span>
+                        <span class="nav-text">Active Users</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link" onclick="showSection('devices')" data-section="devices">
+                        <span class="nav-icon">💻</span>
+                        <span class="nav-text">Device Management</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link" onclick="showSection('scripts')" data-section="scripts">
+                        <span class="nav-icon">📜</span>
+                        <span class="nav-text">Script Management</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link" onclick="showSection('logs')" data-section="logs">
+                        <span class="nav-icon">📋</span>
+                        <span class="nav-text">Activity Logs</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link" onclick="showSection('security')" data-section="security">
+                        <span class="nav-icon">🔐</span>
+                        <span class="nav-text">Security Settings</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link" onclick="showSection('system')" data-section="system">
+                        <span class="nav-icon">⚙️</span>
+                        <span class="nav-text">System Settings</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+
+        <!-- Sidebar Overlay for Mobile -->
+        <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+        <!-- Main Content -->
+        <main class="admin-main">
+            <!-- Dashboard Section -->
+            <section id="dashboard" class="content-section active">
+                <div class="page-header">
+                    <h1 class="page-title">Dashboard</h1>
+                    <p class="page-subtitle">Overview of system activity and statistics</p>
+                    <div class="page-actions">
+                        <button class="btn btn-primary" onclick="refreshDashboard()">
+                            🔄 Refresh Data
+                        </button>
+                        <button class="btn btn-secondary" onclick="exportReport()">
+                            📊 Export Report
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Statistics Grid -->
+                <div class="stats-grid">
+                    <div class="stat-card hover-lift">
+                        <div class="stat-icon primary">👥</div>
+                        <div class="stat-value" id="totalUsers">0</div>
+                        <div class="stat-label">Total Users</div>
+                        <div class="stat-change positive" id="usersChange">+0% from last week</div>
+                    </div>
+                    
+                    <div class="stat-card hover-lift">
+                        <div class="stat-icon warning">⏳</div>
+                        <div class="stat-value" id="pendingRequests">0</div>
+                        <div class="stat-label">Pending Requests</div>
+                        <div class="stat-change" id="pendingChange">0 new today</div>
+                    </div>
+                    
+                    <div class="stat-card hover-lift">
+                        <div class="stat-icon success">✅</div>
+                        <div class="stat-value" id="activeUsers">0</div>
+                        <div class="stat-label">Active Users</div>
+                        <div class="stat-change positive" id="activeChange">+0% from yesterday</div>
+                    </div>
+                    
+                    <div class="stat-card hover-lift">
+                        <div class="stat-icon danger">🚫</div>
+                        <div class="stat-value" id="blockedDevices">0</div>
+                        <div class="stat-label">Blocked Devices</div>
+                        <div class="stat-change" id="blockedChange">0 this week</div>
+                    </div>
+                </div>
+
+                <!-- Recent Activity and Quick Actions -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2rem;">
+                    <!-- Recent Activity -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">Recent Activity</h3>
+                            <div class="card-actions">
+                                <button class="btn btn-sm btn-secondary" onclick="refreshActivity()">
+                                    🔄
+                                </button>
+                            </div>
+                        </div>
+                        <div class="activity-feed" id="recentActivity">
+                            <div class="activity-item">
+                                <div class="activity-avatar">U</div>
+                                <div class="activity-content">
+                                    <div class="activity-title">New user registration</div>
+                                    <div class="activity-description">John Doe requested access</div>
+                                    <div class="activity-time">5 minutes ago</div>
+                                </div>
+                            </div>
+                            <div class="activity-item">
+                                <div class="activity-avatar">S</div>
+                                <div class="activity-content">
+                                    <div class="activity-title">Script updated</div>
+                                    <div class="activity-description">Main AI script v1.2.0 deployed</div>
+                                    <div class="activity-time">2 hours ago</div>
+                                </div>
+                            </div>
+                            <div class="activity-item">
+                                <div class="activity-avatar">A</div>
+                                <div class="activity-content">
+                                    <div class="activity-title">User approved</div>
+                                    <div class="activity-description">Jane Smith gained access</div>
+                                    <div class="activity-time">1 day ago</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quick Actions -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">Quick Actions</h3>
+                        </div>
+                        <div style="display: grid; gap: 1rem;">
+                            <button class="btn btn-primary" onclick="showSection('pending')">
+                                ⏳ Review Pending Requests
+                            </button>
+                            <button class="btn btn-success" onclick="showAddUserModal()">
+                                ➕ Add New User
+                            </button>
+                            <button class="btn btn-warning" onclick="showSection('scripts')">
+                                📜 Deploy Script Update
+                            </button>
+                            <button class="btn btn-secondary" onclick="showSection('security')">
+                                🔐 Security Settings
+                            </button>
+                            <button class="btn btn-info" onclick="generateBackupCodes()">
+                                🔑 Generate Backup Codes
+                            </button>
+                            <button class="btn btn-danger" onclick="emergencyShutdown()">
+                                🚨 Emergency Shutdown
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- System Status -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">System Status</h3>
+                        <div class="card-actions">
+                            <span class="status-badge active" id="systemStatus">Online</span>
+                        </div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                        <div>
+                            <strong>Server Uptime:</strong>
+                            <div id="serverUptime">99.9%</div>
+                        </div>
+                        <div>
+                            <strong>Active Connections:</strong>
+                            <div id="activeConnections">0</div>
+                        </div>
+                        <div>
+                            <strong>Last Backup:</strong>
+                            <div id="lastBackup">2 hours ago</div>
+                        </div>
+                        <div>
+                            <strong>Storage Used:</strong>
+                            <div id="storageUsed">45%</div>
+                            <div class="progress" style="margin-top: 0.5rem;">
+                                <div class="progress-bar" style="width: 45%;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Pending Requests Section -->
+            <section id="pending" class="content-section">
+                <div class="page-header">
+                    <h1 class="page-title">Pending Requests</h1>
+                    <p class="page-subtitle">Review and manage user access requests</p>
+                    <div class="page-actions">
+                        <button class="btn btn-success" onclick="approveAll()">
+                            ✅ Approve All
+                        </button>
+                        <button class="btn btn-danger" onclick="denyAll()">
+                            ❌ Deny All
+                        </button>
+                        <button class="btn btn-primary" onclick="refreshPending()">
+                            🔄 Refresh
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Search and Filters -->
+                <div class="search-filters">
+                    <input type="text" class="search-input" placeholder="Search requests..." id="pendingSearch">
+                    <select class="filter-select" id="pendingFilter">
+                        <option value="all">All Requests</option>
+                        <option value="today">Today</option>
+                        <option value="week">This Week</option>
+                        <option value="month">This Month</option>
+                    </select>
+                    <select class="filter-select" id="pendingSort">
+                        <option value="newest">Newest First</option>
+                        <option value="oldest">Oldest First</option>
+                        <option value="name">By Name</option>
+                    </select>
+                </div>
+
+                <!-- Pending Requests Table -->
+                <div class="table-container">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>
+                                    <input type="checkbox" id="selectAllPending" onchange="toggleSelectAllPending()">
+                                </th>
+                                <th>Name</th>
+                                <th>HWID</th>
+                                <th>User Agent</th>
+                                <th>Request Date</th>
+                                <th>Last URL</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="pendingTableBody">
+                            <!-- Dynamic content will be inserted here -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                <div class="pagination" id="pendingPagination">
+                    <!-- Dynamic pagination will be inserted here -->
+                </div>
+            </section>
+<!-- Active Users Section -->
+            <section id="users" class="content-section">
+                <div class="page-header">
+                    <h1 class="page-title">Active Users</h1>
+                    <p class="page-subtitle">Manage approved users and their access</p>
+                    <div class="page-actions">
+                        <button class="btn btn-primary" onclick="showAddUserModal()">
+                            ➕ Add User
+                        </button>
+                        <button class="btn btn-warning" onclick="exportUsers()">
+                            📊 Export List
+                        </button>
+                        <button class="btn btn-secondary" onclick="refreshUsers()">
+                            🔄 Refresh
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Search and Filters -->
+                <div class="search-filters">
+                    <input type="text" class="search-input" placeholder="Search users..." id="usersSearch">
+                    <select class="filter-select" id="usersStatus">
+                        <option value="all">All Status</option>
+                        <option value="active">Active</option>
+                        <option value="inactive">Inactive</option>
+                        <option value="suspended">Suspended</option>
+                    </select>
+                    <select class="filter-select" id="usersSort">
+                        <option value="name">By Name</option>
+                        <option value="newest">Newest First</option>
+                        <option value="lastSeen">Last Seen</option>
+                        <option value="requests">Most Requests</option>
+                    </select>
+                </div>
+
+                <!-- Users Table -->
+                <div class="table-container">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>
+                                    <input type="checkbox" id="selectAllUsers" onchange="toggleSelectAllUsers()">
+                                </th>
+                                <th>User</th>
+                                <th>Status</th>
+                                <th>Devices</th>
+                                <th>Last Seen</th>
+                                <th>Requests Today</th>
+                                <th>Total Requests</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usersTableBody">
+                            <!-- Dynamic content will be inserted here -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Bulk Actions -->
+                <div class="card" id="bulkActionsUsers" style="display: none;">
+                    <div class="card-header">
+                        <h3 class="card-title">Bulk Actions</h3>
+                        <span id="selectedUsersCount">0 users selected</span>
+                    </div>
+                    <div style="display: flex; gap: 1rem;">
+                        <button class="btn btn-warning" onclick="bulkSuspendUsers()">
+                            ⏸️ Suspend Selected
+                        </button>
+                        <button class="btn btn-success" onclick="bulkActivateUsers()">
+                            ▶️ Activate Selected
+                        </button>
+                        <button class="btn btn-danger" onclick="bulkRemoveUsers()">
+                            🗑️ Remove Selected
+                        </button>
+                        <button class="btn btn-secondary" onclick="clearUserSelection()">
+                            ❌ Clear Selection
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Pagination -->
+                <div class="pagination" id="usersPagination">
+                    <!-- Dynamic pagination will be inserted here -->
+                </div>
+            </section>
+
+            <!-- Device Management Section -->
+            <section id="devices" class="content-section">
+                <div class="page-header">
+                    <h1 class="page-title">Device Management</h1>
+                    <p class="page-subtitle">Monitor and control device access</p>
+                    <div class="page-actions">
+                        <button class="btn btn-danger" onclick="showBlockDeviceModal()">
+                            🚫 Block Device
+                        </button>
+                        <button class="btn btn-warning" onclick="exportDevices()">
+                            📊 Export Data
+                        </button>
+                        <button class="btn btn-primary" onclick="refreshDevices()">
+                            🔄 Refresh
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Device Statistics -->
+                <div class="stats-grid" style="margin-bottom: 2rem;">
+                    <div class="stat-card">
+                        <div class="stat-icon primary">💻</div>
+                        <div class="stat-value" id="totalDevices">0</div>
+                        <div class="stat-label">Total Devices</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon success">🟢</div>
+                        <div class="stat-value" id="activeDevices">0</div>
+                        <div class="stat-label">Active Devices</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon warning">🟡</div>
+                        <div class="stat-value" id="suspiciousDevices">0</div>
+                        <div class="stat-label">Suspicious Activity</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon danger">🔴</div>
+                        <div class="stat-value" id="blockedDevicesCount">0</div>
+                        <div class="stat-label">Blocked Devices</div>
+                    </div>
+                </div>
+
+                <!-- Search and Filters -->
+                <div class="search-filters">
+                    <input type="text" class="search-input" placeholder="Search by HWID, user, or IP..." id="devicesSearch">
+                    <select class="filter-select" id="deviceStatus">
+                        <option value="all">All Status</option>
+                        <option value="active">Active</option>
+                        <option value="inactive">Inactive</option>
+                        <option value="blocked">Blocked</option>
+                        <option value="suspicious">Suspicious</option>
+                    </select>
+                    <select class="filter-select" id="devicePlatform">
+                        <option value="all">All Platforms</option>
+                        <option value="windows">Windows</option>
+                        <option value="mac">macOS</option>
+                        <option value="linux">Linux</option>
+                        <option value="mobile">Mobile</option>
+                    </select>
+                    <select class="filter-select" id="devicesSort">
+                        <option value="lastSeen">Last Seen</option>
+                        <option value="user">By User</option>
+                        <option value="requests">Most Active</option>
+                        <option value="suspicious">Suspicious First</option>
+                    </select>
+                </div>
+
+                <!-- Devices Table -->
+                <div class="table-container">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>
+                                    <input type="checkbox" id="selectAllDevices" onchange="toggleSelectAllDevices()">
+                                </th>
+                                <th>Device Info</th>
+                                <th>User</th>
+                                <th>Status</th>
+                                <th>Platform</th>
+                                <th>Last IP</th>
+                                <th>Last Seen</th>
+                                <th>Risk Level</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="devicesTableBody">
+                            <!-- Dynamic content will be inserted here -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Device Analytics -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 2rem;">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">Platform Distribution</h3>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="platformChart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">Activity Timeline</h3>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="activityChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pagination -->
+                <div class="pagination" id="devicesPagination">
+                    <!-- Dynamic pagination will be inserted here -->
+                </div>
+            </section>
+
+            <!-- Script Management Section -->
+            <section id="scripts" class="content-section">
+                <div class="page-header">
+                    <h1 class="page-title">Script Management</h1>
+                    <p class="page-subtitle">Deploy and manage AI assistant scripts</p>
+                    <div class="page-actions">
+                        <button class="btn btn-primary" onclick="showUploadScriptModal()">
+                            📤 Upload New Script
+                        </button>
+                        <button class="btn btn-warning" onclick="showScriptSettingsModal()">
+                            ⚙️ Script Settings
+                        </button>
+                        <button class="btn btn-secondary" onclick="refreshScripts()">
+                            🔄 Refresh
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Current Script Status -->
+                <div class="card" style="margin-bottom: 2rem;">
+                    <div class="card-header">
+                        <h3 class="card-title">Current Active Script</h3>
+                        <span class="status-badge active" id="scriptStatus">Live</span>
+                    </div>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 2rem;">
+                        <div>
+                            <strong>Version:</strong>
+                            <div id="currentScriptVersion">v1.2.0</div>
+                        </div>
+                        <div>
+                            <strong>Deployed:</strong>
+                            <div id="scriptDeployDate">2 hours ago</div>
+                        </div>
+                        <div>
+                            <strong>Active Users:</strong>
+                            <div id="scriptActiveUsers">45</div>
+                        </div>
+                        <div>
+                            <strong>Success Rate:</strong>
+                            <div id="scriptSuccessRate">98.5%</div>
+                        </div>
+                    </div>
+                    <div style="margin-top: 1rem;">
+                        <button class="btn btn-danger btn-sm" onclick="disableScript()">
+                            ⏹️ Disable Script
+                        </button>
+                        <button class="btn btn-warning btn-sm" onclick="showRollbackModal()">
+                            ↩️ Rollback Version
+                        </button>
+                        <button class="btn btn-secondary btn-sm" onclick="downloadCurrentScript()">
+                            💾 Download Current
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Script Versions History -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Version History</h3>
+                        <div class="card-actions">
+                            <select class="filter-select" id="versionFilter">
+                                <option value="all">All Versions</option>
+                                <option value="active">Active Only</option>
+                                <option value="archived">Archived</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="table-container">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Version</th>
+                                    <th>Status</th>
+                                    <th>Upload Date</th>
+                                    <th>File Size</th>
+                                    <th>Deployment</th>
+                                    <th>Notes</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="scriptsTableBody">
+                                <!-- Dynamic content will be inserted here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Script Performance Metrics -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 2rem;">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">Performance Metrics</h3>
+                        </div>
+                        <div style="display: grid; gap: 1rem;">
+                            <div style="display: flex; justify-content: space-between;">
+                                <span>Execution Time:</span>
+                                <strong id="scriptExecTime">~150ms</strong>
+                            </div>
+                            <div style="display: flex; justify-content: space-between;">
+                                <span>Memory Usage:</span>
+                                <strong id="scriptMemory">~8MB</strong>
+                            </div>
+                            <div style="display: flex; justify-content: space-between;">
+                                <span>Error Rate:</span>
+                                <strong id="scriptErrorRate">1.5%</strong>
+                            </div>
+                            <div style="display: flex; justify-content: space-between;">
+                                <span>Cache Hit Rate:</span>
+                                <strong id="scriptCacheRate">92%</strong>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">Recent Deployments</h3>
+                        </div>
+                        <div class="activity-feed" id="deploymentHistory">
+                            <div class="activity-item">
+                                <div class="activity-avatar">✅</div>
+                                <div class="activity-content">
+                                    <div class="activity-title">v1.2.0 Deployed</div>
+                                    <div class="activity-description">Performance improvements</div>
+                                    <div class="activity-time">2 hours ago</div>
+                                </div>
+                            </div>
+                            <div class="activity-item">
+                                <div class="activity-avatar">🔧</div>
+                                <div class="activity-content">
+                                    <div class="activity-title">v1.1.9 Uploaded</div>
+                                    <div class="activity-description">Bug fixes for edge cases</div>
+                                    <div class="activity-time">1 day ago</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Activity Logs Section -->
+            <section id="logs" class="content-section">
+                <div class="page-header">
+                    <h1 class="page-title">Activity Logs</h1>
+                    <p class="page-subtitle">Monitor system activity and security events</p>
+                    <div class="page-actions">
+                        <button class="btn btn-primary" onclick="exportLogs()">
+                            📥 Export Logs
+                        </button>
+                        <button class="btn btn-warning" onclick="clearOldLogs()">
+                            🗑️ Clear Old Logs
+                        </button>
+                        <button class="btn btn-secondary" onclick="refreshLogs()">
+                            🔄 Refresh
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Log Filters -->
+                <div class="search-filters">
+                    <input type="text" class="search-input" placeholder="Search logs..." id="logsSearch">
+                    <select class="filter-select" id="logLevel">
+                        <option value="all">All Levels</option>
+                        <option value="info">Info</option>
+                        <option value="warning">Warning</option>
+                        <option value="error">Error</option>
+                        <option value="security">Security</option>
+                    </select>
+                    <select class="filter-select" id="logTimeframe">
+                        <option value="today">Today</option>
+                        <option value="week">This Week</option>
+                        <option value="month">This Month</option>
+                        <option value="all">All Time</option>
+                    </select>
+                    <input type="date" class="filter-select" id="logDateFrom" title="From Date">
+                    <input type="date" class="filter-select" id="logDateTo" title="To Date">
+                </div>
+
+                <!-- Logs Table -->
+                <div class="table-container">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Timestamp</th>
+                                <th>Level</th>
+                                <th>Source</th>
+                                <th>User/Device</th>
+                                <th>Action</th>
+                                <th>Details</th>
+                                <th>IP Address</th>
+                            </tr>
+                        </thead>
+                        <tbody id="logsTableBody">
+                            <!-- Dynamic content will be inserted here -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Log Analytics -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 2rem;">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">Log Level Distribution</h3>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="logLevelChart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">Activity Over Time</h3>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="logTimeChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pagination -->
+                <div class="pagination" id="logsPagination">
+                    <!-- Dynamic pagination will be inserted here -->
+                </div>
+            </section>
+<!-- Security Settings Section -->
+            <section id="security" class="content-section">
+                <div class="page-header">
+                    <h1 class="page-title">Security Settings</h1>
+                    <p class="page-subtitle">Configure security policies and authentication</p>
+                    <div class="page-actions">
+                        <button class="btn btn-danger" onclick="generateNewTokens()">
+                            🔑 Regenerate Tokens
+                        </button>
+                        <button class="btn btn-warning" onclick="auditSecurity()">
+                            🔍 Security Audit
+                        </button>
+                        <button class="btn btn-primary" onclick="saveSecurity()">
+                            💾 Save Settings
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Security Status -->
+                <div class="card" style="margin-bottom: 2rem;">
+                    <div class="card-header">
+                        <h3 class="card-title">Security Status</h3>
+                        <span class="status-badge approved" id="securityStatus">Secure</span>
+                    </div>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem;">
+                        <div>
+                            <strong>SSL Certificate:</strong>
+                            <div style="color: var(--success-color);">✅ Valid (90 days remaining)</div>
+                        </div>
+                        <div>
+                            <strong>Two-Factor Auth:</strong>
+                            <div style="color: var(--success-color);" id="twoFactorStatus">✅ Enabled</div>
+                        </div>
+                        <div>
+                            <strong>Rate Limiting:</strong>
+                            <div style="color: var(--success-color);" id="rateLimitStatus">✅ Active</div>
+                        </div>
+                        <div>
+                            <strong>Last Security Scan:</strong>
+                            <div id="lastSecurityScan">2 hours ago</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Authentication Settings -->
+                <div class="card" style="margin-bottom: 2rem;">
+                    <div class="card-header">
+                        <h3 class="card-title">Authentication Settings</h3>
+                    </div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label">Current Admin Password</label>
+                            <input type="password" class="form-input" id="currentAdminPassword" placeholder="Enter current password">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">New Admin Password</label>
+                            <input type="password" class="form-input" id="newAdminPassword" placeholder="Enter new password">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Confirm New Password</label>
+                            <input type="password" class="form-input" id="confirmAdminPassword" placeholder="Confirm new password">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Access Password for Users</label>
+                            <input type="text" class="form-input" id="userAccessPassword" placeholder="Password users need to download script">
+                        </div>
+                    </div>
+                    <div style="margin-top: 1rem;">
+                        <button class="btn btn-primary" onclick="updatePasswords()">
+                            🔒 Update Passwords
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Two-Factor Authentication -->
+                <div class="card" style="margin-bottom: 2rem;">
+                    <div class="card-header">
+                        <h3 class="card-title">Two-Factor Authentication</h3>
+                        <button class="btn btn-sm btn-secondary" onclick="toggle2FA()">
+                            <span id="twoFactorToggleText">Disable 2FA</span>
+                        </button>
+                    </div>
+                    <div id="twoFactorSettings">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+                            <div>
+                                <h4>QR Code for Authenticator App</h4>
+                                <div id="qrCodeContainer" style="text-align: center; padding: 1rem; background: white; border-radius: 8px; margin: 1rem 0;">
+                                    <!-- QR Code will be generated here -->
+                                    <div style="width: 200px; height: 200px; background: #f0f0f0; margin: 0 auto; display: flex; align-items: center; justify-content: center; color: #666;">
+                                        QR Code
+                                    </div>
+                                </div>
+                                <p style="font-size: 0.9rem; color: var(--text-secondary);">
+                                    Scan this QR code with your authenticator app (Google Authenticator, Authy, etc.)
+                                </p>
+                            </div>
+                            <div>
+                                <h4>Backup Codes</h4>
+                                <div class="backup-codes" id="backupCodesList">
+                                    <!-- Backup codes will be listed here -->
+                                    <div style="color: var(--text-muted);">Click "Generate Backup Codes" to create recovery codes</div>
+                                </div>
+                                <div style="margin-top: 1rem;">
+                                    <button class="btn btn-warning" onclick="generateBackupCodes()">
+                                        🔑 Generate New Backup Codes
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Rate Limiting Settings -->
+                <div class="card" style="margin-bottom: 2rem;">
+                    <div class="card-header">
+                        <h3 class="card-title">Rate Limiting & Security Policies</h3>
+                    </div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label">Max Requests per Hour</label>
+                            <input type="number" class="form-input" id="maxRequestsPerHour" value="100" min="1" max="10000">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Max Failed Login Attempts</label>
+                            <input type="number" class="form-input" id="maxFailedLogins" value="5" min="1" max="20">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Lockout Duration (minutes)</label>
+                            <input type="number" class="form-input" id="lockoutDuration" value="30" min="1" max="1440">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Session Timeout (hours)</label>
+                            <input type="number" class="form-input" id="sessionTimeout" value="24" min="1" max="168">
+                        </div>
+                    </div>
+                    <div style="margin-top: 1rem;">
+                        <div class="form-checkbox">
+                            <input type="checkbox" id="enableIpWhitelist">
+                            <label>Enable IP Whitelist</label>
+                        </div>
+                        <div class="form-checkbox">
+                            <input type="checkbox" id="enableGeoBlocking">
+                            <label>Enable Geographic Blocking</label>
+                        </div>
+                        <div class="form-checkbox">
+                            <input type="checkbox" id="enableDeviceFingerprinting" checked>
+                            <label>Enable Advanced Device Fingerprinting</label>
+                        </div>
+                        <div class="form-checkbox">
+                            <input type="checkbox" id="logSecurityEvents" checked>
+                            <label>Log All Security Events</label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Security Audit Log -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Recent Security Events</h3>
+                        <button class="btn btn-sm btn-secondary" onclick="refreshSecurityEvents()">
+                            🔄 Refresh
+                        </button>
+                    </div>
+                    <div class="table-container">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Timestamp</th>
+                                    <th>Event Type</th>
+                                    <th>Source IP</th>
+                                    <th>User/Device</th>
+                                    <th>Severity</th>
+                                    <th>Details</th>
+                                </tr>
+                            </thead>
+                            <tbody id="securityEventsBody">
+                                <!-- Dynamic content will be inserted here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- System Settings Section -->
+            <section id="system" class="content-section">
+                <div class="page-header">
+                    <h1 class="page-title">System Settings</h1>
+                    <p class="page-subtitle">Configure system behavior and notifications</p>
+                    <div class="page-actions">
+                        <button class="btn btn-primary" onclick="saveSystemSettings()">
+                            💾 Save Settings
+                        </button>
+                        <button class="btn btn-warning" onclick="exportSystemConfig()">
+                            📤 Export Config
+                        </button>
+                        <button class="btn btn-secondary" onclick="resetToDefaults()">
+                            🔄 Reset to Defaults
+                        </button>
+                    </div>
+                </div>
+
+                <!-- General Settings -->
+                <div class="card" style="margin-bottom: 2rem;">
+                    <div class="card-header">
+                        <h3 class="card-title">General Settings</h3>
+                    </div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label">System Name</label>
+                            <input type="text" class="form-input" id="systemName" value="LMS AI Assistant">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Admin Email</label>
+                            <input type="email" class="form-input" id="adminEmail" placeholder="admin@example.com">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Time Zone</label>
+                            <select class="form-select" id="systemTimezone">
+                                <option value="UTC">UTC</option>
+                                <option value="America/New_York">Eastern Time</option>
+                                <option value="America/Chicago">Central Time</option>
+                                <option value="America/Denver">Mountain Time</option>
+                                <option value="America/Los_Angeles">Pacific Time</option>
+                                <option value="Europe/London">London Time</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Default Language</label>
+                            <select class="form-select" id="systemLanguage">
+                                <option value="en">English</option>
+                                <option value="es">Spanish</option>
+                                <option value="fr">French</option>
+                                <option value="de">German</option>
+                                <option value="zh">Chinese</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Notification Settings -->
+                <div class="card" style="margin-bottom: 2rem;">
+                    <div class="card-header">
+                        <h3 class="card-title">Notification Settings</h3>
+                    </div>
+                    <div style="display: grid; gap: 1rem;">
+                        <div class="form-checkbox">
+                            <input type="checkbox" id="emailNotifications" checked>
+                            <label>Enable Email Notifications</label>
+                        </div>
+                        <div class="form-checkbox">
+                            <input type="checkbox" id="newUserNotifications" checked>
+                            <label>Notify on New User Registrations</label>
+                        </div>
+                        <div class="form-checkbox">
+                            <input type="checkbox" id="securityNotifications" checked>
+                            <label>Notify on Security Events</label>
+                        </div>
+                        <div class="form-checkbox">
+                            <input type="checkbox" id="systemErrorNotifications" checked>
+                            <label>Notify on System Errors</label>
+                        </div>
+                        <div class="form-checkbox">
+                            <input type="checkbox" id="dailyReports">
+                            <label>Send Daily Activity Reports</label>
+                        </div>
+                        <div class="form-checkbox">
+                            <input type="checkbox" id="weeklyReports">
+                            <label>Send Weekly Summary Reports</label>
+                        </div>
+                    </div>
+                    <div class="form-group" style="margin-top: 1rem;">
+                        <label class="form-label">Notification Email Address</label>
+                        <input type="email" class="form-input" id="notificationEmail" placeholder="notifications@example.com">
+                    </div>
+                </div>
+
+                <!-- Data Retention Settings -->
+                <div class="card" style="margin-bottom: 2rem;">
+                    <div class="card-header">
+                        <h3 class="card-title">Data Retention</h3>
+                    </div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label">Keep Activity Logs (days)</label>
+                            <input type="number" class="form-input" id="logRetentionDays" value="90" min="1" max="365">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Keep User Sessions (days)</label>
+                            <input type="number" class="form-input" id="sessionRetentionDays" value="30" min="1" max="90">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Archive Old Data After (days)</label>
+                            <input type="number" class="form-input" id="archiveAfterDays" value="180" min="30" max="1095">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Backup Frequency</label>
+                            <select class="form-select" id="backupFrequency">
+                                <option value="hourly">Every Hour</option>
+                                <option value="daily" selected>Daily</option>
+                                <option value="weekly">Weekly</option>
+                                <option value="monthly">Monthly</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div style="margin-top: 1rem;">
+                        <div class="form-checkbox">
+                            <input type="checkbox" id="autoCleanup" checked>
+                            <label>Enable Automatic Data Cleanup</label>
+                        </div>
+                        <div class="form-checkbox">
+                            <input type="checkbox" id="compressOldData" checked>
+                            <label>Compress Old Data</label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Performance Settings -->
+                <div class="card" style="margin-bottom: 2rem;">
+                    <div class="card-header">
+                        <h3 class="card-title">Performance & Limits</h3>
+                    </div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label">Max Concurrent Users</label>
+                            <input type="number" class="form-input" id="maxConcurrentUsers" value="1000" min="1" max="10000">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Cache Duration (minutes)</label>
+                            <input type="number" class="form-input" id="cacheDuration" value="60" min="1" max="1440">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Database Connection Pool Size</label>
+                            <input type="number" class="form-input" id="dbPoolSize" value="20" min="5" max="100">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Request Timeout (seconds)</label>
+                            <input type="number" class="form-input" id="requestTimeout" value="30" min="5" max="300">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Emergency Settings -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Emergency Controls</h3>
+                        <span class="status-badge danger">⚠️ Use with Caution</span>
+                    </div>
+                    <div style="display: grid; gap: 1rem;">
+                        <div style="padding: 1rem; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); border-radius: 8px;">
+                            <h4 style="color: var(--error-color); margin-bottom: 0.5rem;">Emergency Shutdown</h4>
+                            <p style="color: var(--text-secondary); margin-bottom: 1rem;">
+                                Immediately disable all script access and block new registrations. This action cannot be undone remotely.
+                            </p>
+                            <button class="btn btn-danger" onclick="confirmEmergencyShutdown()">
+                                🚨 Emergency Shutdown
+                            </button>
+                        </div>
+                        
+                        <div style="padding: 1rem; background: rgba(251, 191, 36, 0.1); border: 1px solid rgba(251, 191, 36, 0.2); border-radius: 8px;">
+                            <h4 style="color: var(--warning-color); margin-bottom: 0.5rem;">Maintenance Mode</h4>
+                            <p style="color: var(--text-secondary); margin-bottom: 1rem;">
+                                Temporarily disable user access while keeping admin functions available for maintenance.
+                            </p>
+                            <button class="btn btn-warning" onclick="toggleMaintenanceMode()">
+                                🔧 <span id="maintenanceModeText">Enable Maintenance Mode</span>
+                            </button>
+                        </div>
+                        
+                        <div style="padding: 1rem; background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.2); border-radius: 8px;">
+                            <h4 style="color: var(--info-color); margin-bottom: 0.5rem;">Factory Reset</h4>
+                            <p style="color: var(--text-secondary); margin-bottom: 1rem;">
+                                Reset all settings to default values. User data and logs will be preserved.
+                            </p>
+                            <button class="btn btn-secondary" onclick="confirmFactoryReset()">
+                                🔄 Factory Reset Settings
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+<!-- Modal Dialogs -->
+    
+    <!-- Add User Modal -->
+    <div class="modal-overlay" id="addUserModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">Add New User</h3>
+                <button class="modal-close" onclick="closeModal('addUserModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="addUserForm">
+                    <div class="form-group">
+                        <label class="form-label">Full Name</label>
+                        <input type="text" class="form-input" id="newUserName" placeholder="Enter full name" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Email Address</label>
+                        <input type="email" class="form-input" id="newUserEmail" placeholder="Enter email address">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Device HWID (Optional)</label>
+                        <input type="text" class="form-input" id="newUserHwid" placeholder="Leave empty to generate automatically">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Notes</label>
+                        <textarea class="form-textarea" id="newUserNotes" placeholder="Optional notes about this user"></textarea>
+                    </div>
+                    <div class="form-checkbox">
+                        <input type="checkbox" id="newUserAutoApprove" checked>
+                        <label>Auto-approve this user</label>
+                    </div>
+                    <div class="form-checkbox">
+                        <input type="checkbox" id="newUserSendEmail">
+                        <label>Send welcome email</label>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('addUserModal')">Cancel</button>
+                <button class="btn btn-primary" onclick="addNewUser()">Add User</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Block Device Modal -->
+    <div class="modal-overlay" id="blockDeviceModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">Block Device</h3>
+                <button class="modal-close" onclick="closeModal('blockDeviceModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="blockDeviceForm">
+                    <div class="form-group">
+                        <label class="form-label">Device HWID</label>
+                        <input type="text" class="form-input" id="blockDeviceHwid" placeholder="Enter device HWID to block" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Reason for Blocking</label>
+                        <select class="form-select" id="blockReason">
+                            <option value="suspicious">Suspicious Activity</option>
+                            <option value="violation">Policy Violation</option>
+                            <option value="security">Security Threat</option>
+                            <option value="abuse">System Abuse</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Additional Notes</label>
+                        <textarea class="form-textarea" id="blockNotes" placeholder="Describe the reason for blocking this device"></textarea>
+                    </div>
+                    <div class="form-checkbox">
+                        <input type="checkbox" id="blockPermanent">
+                        <label>Permanent block (cannot be automatically lifted)</label>
+                    </div>
+                    <div class="form-checkbox">
+                        <input type="checkbox" id="blockNotifyUser" checked>
+                        <label>Notify user via email</label>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('blockDeviceModal')">Cancel</button>
+                <button class="btn btn-danger" onclick="blockDevice()">Block Device</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Upload Script Modal -->
+    <div class="modal-overlay" id="uploadScriptModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">Upload New Script</h3>
+                <button class="modal-close" onclick="closeModal('uploadScriptModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="uploadScriptForm">
+                    <div class="form-group">
+                        <label class="form-label">Script Version</label>
+                        <input type="text" class="form-input" id="scriptVersion" placeholder="e.g., v1.3.0" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Script File</label>
+                        <div class="file-upload" onclick="document.getElementById('scriptFile').click()">
+                            <div class="file-upload-icon">📁</div>
+                            <div class="file-upload-text">Click to select script file</div>
+                            <div class="file-upload-hint">Supported: .js files only</div>
+                        </div>
+                        <input type="file" id="scriptFile" accept=".js" style="display: none;" onchange="handleFileSelect(this)">
+                        <div class="file-list" id="uploadFileList"></div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Release Notes</label>
+                        <textarea class="form-textarea" id="releaseNotes" placeholder="Describe what's new in this version"></textarea>
+                    </div>
+                    <div class="form-checkbox">
+                        <input type="checkbox" id="deployImmediately">
+                        <label>Deploy immediately after upload</label>
+                    </div>
+                    <div class="form-checkbox">
+                        <input type="checkbox" id="notifyUsers" checked>
+                        <label>Notify users of update</label>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('uploadScriptModal')">Cancel</button>
+                <button class="btn btn-primary" onclick="uploadScript()">Upload Script</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Details Modal -->
+    <div class="modal-overlay" id="userDetailsModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">User Details</h3>
+                <button class="modal-close" onclick="closeModal('userDetailsModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="userDetailsContent">
+                    <!-- Dynamic content will be loaded here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('userDetailsModal')">Close</button>
+                <button class="btn btn-warning" onclick="editUser()">Edit User</button>
+                <button class="btn btn-danger" onclick="removeUser()">Remove User</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Device Details Modal -->
+    <div class="modal-overlay" id="deviceDetailsModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">Device Details</h3>
+                <button class="modal-close" onclick="closeModal('deviceDetailsModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="deviceDetailsContent">
+                    <!-- Dynamic content will be loaded here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('deviceDetailsModal')">Close</button>
+                <button class="btn btn-warning" onclick="flagDevice()">Flag as Suspicious</button>
+                <button class="btn btn-danger" onclick="blockSelectedDevice()">Block Device</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script Settings Modal -->
+    <div class="modal-overlay" id="scriptSettingsModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">Script Configuration</h3>
+                <button class="modal-close" onclick="closeModal('scriptSettingsModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="tabs">
+                    <div class="tab-list">
+                        <button class="tab-button active" onclick="switchTab('general')">General</button>
+                        <button class="tab-button" onclick="switchTab('features')">Features</button>
+                        <button class="tab-button" onclick="switchTab('advanced')">Advanced</button>
+                    </div>
+                    
+                    <div class="tab-content active" id="general">
+                        <div class="form-group">
+                            <label class="form-label">Script Update URL</label>
+                            <input type="url" class="form-input" id="scriptUpdateUrl" value="https://wrongnumber.netlify.app/loader.js">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Auto-Update Interval (hours)</label>
+                            <input type="number" class="form-input" id="updateInterval" value="24" min="1" max="168">
+                        </div>
+                        <div class="form-checkbox">
+                            <input type="checkbox" id="enableAutoUpdate" checked>
+                            <label>Enable automatic updates</label>
+                        </div>
+                        <div class="form-checkbox">
+                            <input type="checkbox" id="enableDebugMode">
+                            <label>Enable debug mode</label>
+                        </div>
+                    </div>
+                    
+                    <div class="tab-content" id="features">
+                        <div class="form-checkbox">
+                            <input type="checkbox" id="enableAIAssistant" checked>
+                            <label>AI Assistant Features</label>
+                        </div>
+                        <div class="form-checkbox">
+                            <input type="checkbox" id="enableAutomation" checked>
+                            <label>Task Automation</label>
+                        </div>
+                        <div class="form-checkbox">
+                            <input type="checkbox" id="enableAnalytics" checked>
+                            <label>Usage Analytics</label>
+                        </div>
+                        <div class="form-checkbox">
+                            <input type="checkbox" id="enableNotifications">
+                            <label>Push Notifications</label>
+                        </div>
+                    </div>
+                    
+                    <div class="tab-content" id="advanced">
+                        <div class="form-group">
+                            <label class="form-label">Custom Configuration (JSON)</label>
+                            <textarea class="form-textarea" id="customConfig" rows="10" placeholder='{"customSetting": "value"}'></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Resource Limits</label>
+                            <input type="text" class="form-input" id="resourceLimits" placeholder="memory: 50MB, cpu: 10%">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('scriptSettingsModal')">Cancel</button>
+                <button class="btn btn-primary" onclick="saveScriptSettings()">Save Settings</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div class="modal-overlay" id="confirmModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title" id="confirmTitle">Confirm Action</h3>
+                <button class="modal-close" onclick="closeModal('confirmModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p id="confirmMessage">Are you sure you want to perform this action?</p>
+                <div id="confirmDetails" style="margin-top: 1rem; padding: 1rem; background: var(--glass-bg); border-radius: 8px; display: none;"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('confirmModal')">Cancel</button>
+                <button class="btn btn-danger" id="confirmButton" onclick="executeConfirmedAction()">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notifications Modal -->
+    <div class="modal-overlay" id="notificationsModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">Notifications</h3>
+                <button class="modal-close" onclick="closeModal('notificationsModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="activity-feed" id="notificationsList">
+                    <!-- Dynamic notifications will be loaded here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="markAllRead()">Mark All Read</button>
+                <button class="btn btn-primary" onclick="closeModal('notificationsModal')">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div class="modal-overlay" id="settingsModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">Quick Settings</h3>
+                <button class="modal-close" onclick="closeModal('settingsModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Theme</label>
+                    <select class="form-select" id="themeSelect" onchange="changeTheme(this.value)">
+                        <option value="dark">Dark Mode</option>
+                        <option value="light">Light Mode</option>
+                        <option value="auto">Auto (System)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Dashboard Refresh Rate</label>
+                    <select class="form-select" id="refreshRate">
+                        <option value="30">30 seconds</option>
+                        <option value="60" selected>1 minute</option>
+                        <option value="300">5 minutes</option>
+                        <option value="600">10 minutes</option>
+                        <option value="0">Manual only</option>
+                    </select>
+                </div>
+                <div class="form-checkbox">
+                    <input type="checkbox" id="enableSounds">
+                    <label>Enable notification sounds</label>
+                </div>
+                <div class="form-checkbox">
+                    <input type="checkbox" id="enableAnimations" checked>
+                    <label>Enable animations</label>
+                </div>
+                <div class="form-checkbox">
+                    <input type="checkbox" id="compactMode">
+                    <label>Compact mode</label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('settingsModal')">Cancel</button>
+                <button class="btn btn-primary" onclick="saveQuickSettings()">Save Settings</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.8); z-index: 20000; display: flex; justify-content: center; align-items: center;">
+        <div style="text-align: center; color: white;">
+            <div class="loading-spinner" style="margin: 0 auto 1rem;"></div>
+            <div id="loadingText">Loading...</div>
+        </div>
+    </div>
+
+    <!-- PWA Install Banner -->
+    <div id="pwaInstallBanner" style="display: none; position: fixed; bottom: 2rem; left: 2rem; right: 2rem; background: var(--glass-strong); backdrop-filter: blur(20px); border: 1px solid var(--glass-border); border-radius: 16px; padding: 1rem; z-index: 1500;">
+        <div style="display: flex; align-items: center; gap: 1rem;">
+            <div style="flex: 1;">
+                <h4 style="margin-bottom: 0.5rem;">Install LMS AI Admin</h4>
+                <p style="color: var(--text-secondary); margin: 0; font-size: 0.9rem;">
+                    Add this app to your home screen for quick access and offline capabilities.
+                </p>
+            </div>
+            <div style="display: flex; gap: 0.5rem;">
+                <button class="btn btn-secondary btn-sm" onclick="dismissPWABanner()">Dismiss</button>
+                <button class="btn btn-primary btn-sm" onclick="installPWA()">Install</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Context Menu -->
+    <div id="contextMenu" style="display: none; position: fixed; background: var(--surface-dark); border: 1px solid var(--glass-border); border-radius: 8px; padding: 0.5rem 0; z-index: 15000; box-shadow: var(--shadow-lg);">
+        <!-- Dynamic context menu items will be added here -->
+    </div>
+
+    <!-- Progress Bar for Operations -->
+    <div id="operationProgress" style="display: none; position: fixed; top: 70px; left: 0; right: 0; z-index: 1100;">
+        <div class="progress">
+            <div class="progress-bar" id="operationProgressBar" style="width: 0%;"></div>
+        </div>
+        <div style="text-align: center; padding: 0.5rem; background: var(--glass-bg); color: var(--text-secondary); font-size: 0.9rem;" id="operationProgressText">
+            Processing...
+        </div>
+    </div>
+
+    <!-- Keyboard Shortcuts Help -->
+    <div class="modal-overlay" id="shortcutsModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">Keyboard Shortcuts</h3>
+                <button class="modal-close" onclick="closeModal('shortcutsModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+                    <div>
+                        <h4>Navigation</h4>
+                        <div class="code-block">
+                            <div>Ctrl + 1-8: Switch sections</div>
+                            <div>Ctrl + R: Refresh current section</div>
+                            <div>Ctrl + S: Save current form</div>
+                            <div>Escape: Close modal/cancel action</div>
+                        </div>
+                    </div>
+                    <div>
+                        <h4>Quick Actions</h4>
+                        <div class="code-block">
+                            <div>Ctrl + N: Add new user</div>
+                            <div>Ctrl + F: Focus search</div>
+                            <div>Ctrl + T: Toggle theme</div>
+                            <div>Ctrl + L: View logs</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" onclick="closeModal('shortcutsModal')">Close</button>
+            </div>
+        </div>
+    </div>
+<script>
+        // Global Variables
+        let currentTheme = localStorage.getItem('adminTheme') || 'dark';
+        let currentSection = 'dashboard';
+        let isLoggedIn = false;
+        let refreshInterval = null;
+        let currentUser = null;
+        let pendingConfirmAction = null;
+        let deferredPrompt = null;
+
+        // Initialize Application
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeTheme();
+            setupEventListeners();
+            checkAuthentication();
+            setupPWA();
+        });
+
+        // Theme Management
+        function initializeTheme() {
+            document.documentElement.setAttribute('data-theme', currentTheme);
+        }
+
+        function toggleTheme() {
+            currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', currentTheme);
+            localStorage.setItem('adminTheme', currentTheme);
+            showToast('Theme changed to ' + currentTheme + ' mode', 'success');
+        }
+
+        function changeTheme(theme) {
+            currentTheme = theme;
+            document.documentElement.setAttribute('data-theme', currentTheme);
+            localStorage.setItem('adminTheme', currentTheme);
+        }
+
+        // Authentication
+        function checkAuthentication() {
+            const savedAuth = localStorage.getItem('adminAuth');
+            if (savedAuth) {
+                const authData = JSON.parse(savedAuth);
+                if (authData.expires > Date.now()) {
+                    loginSuccess(authData);
+                    return;
+                }
+            }
+            showLoginScreen();
+        }
+
+        function showLoginScreen() {
+            document.getElementById('loginContainer').style.display = 'flex';
+            document.getElementById('adminLayout').classList.remove('active');
+        }
+
+        async function handleLogin(event) {
+            event.preventDefault();
+            const password = document.getElementById('adminPassword').value;
+            const twoFactorCode = document.getElementById('twoFactorCode').value;
+            
+            if (!password) {
+                showToast('Please enter password', 'error');
+                return;
+            }
+
+            setLoginLoading(true);
+
+            try {
+                const response = await fetch('/.netlify/functions/admin-login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        password: password,
+                        twoFactorCode: twoFactorCode,
+                        timestamp: Date.now()
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    if (result.requiresTwoFactor) {
+                        document.getElementById('twoFactorContainer').style.display = 'block';
+                        document.getElementById('twoFactorCode').focus();
+                    } else {
+                        loginSuccess(result);
+                    }
+                } else {
+                    showToast(result.message || 'Login failed', 'error');
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                showToast('Login failed. Please try again.', 'error');
+            } finally {
+                setLoginLoading(false);
+            }
+        }
+
+        function loginSuccess(authData) {
+            isLoggedIn = true;
+            currentUser = authData.user;
+            
+            // Save authentication
+            localStorage.setItem('adminAuth', JSON.stringify({
+                token: authData.token,
+                user: authData.user,
+                expires: Date.now() + (24 * 60 * 60 * 1000) // 24 hours
+            }));
+
+            // Show admin layout
+            document.getElementById('loginContainer').style.display = 'none';
+            document.getElementById('adminLayout').classList.add('active');
+            
+            // Initialize admin panel
+            initializeAdminPanel();
+            showToast('Welcome back, ' + currentUser.name, 'success');
+        }
+
+        function logout() {
+            localStorage.removeItem('adminAuth');
+            isLoggedIn = false;
+            currentUser = null;
+            if (refreshInterval) {
+                clearInterval(refreshInterval);
+            }
+            showLoginScreen();
+            showToast('Logged out successfully', 'info');
+        }
+
+        function setLoginLoading(loading) {
+            const loginBtn = document.getElementById('loginBtn');
+            const loginText = document.getElementById('loginText');
+            const loginLoader = document.getElementById('loginLoader');
+            
+            loginBtn.disabled = loading;
+            loginText.style.display = loading ? 'none' : 'inline-block';
+            loginLoader.style.display = loading ? 'inline-block' : 'none';
+        }
+
+        // Admin Panel Initialization
+        function initializeAdminPanel() {
+            loadDashboardData();
+            setupAutoRefresh();
+            loadNotifications();
+            updateUserInfo();
+        }
+
+        function updateUserInfo() {
+            if (currentUser) {
+                document.getElementById('userAvatar').textContent = currentUser.name.charAt(0).toUpperCase();
+                document.getElementById('userName').textContent = currentUser.name;
+            }
+        }
+
+        // Navigation
+        function showSection(sectionId) {
+            // Hide all sections
+            document.querySelectorAll('.content-section').forEach(section => {
+                section.classList.remove('active');
+            });
+            
+            // Remove active class from all nav links
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('active');
+            });
+            
+            // Show selected section
+            document.getElementById(sectionId).classList.add('active');
+            
+            // Add active class to corresponding nav link
+            document.querySelector(`[data-section="${sectionId}"]`).classList.add('active');
+            
+            currentSection = sectionId;
+            
+            // Load section-specific data
+            loadSectionData(sectionId);
+        }
+
+        function loadSectionData(sectionId) {
+            switch(sectionId) {
+                case 'dashboard':
+                    loadDashboardData();
+                    break;
+                case 'pending':
+                    loadPendingRequests();
+                    break;
+                case 'users':
+                    loadActiveUsers();
+                    break;
+                case 'devices':
+                    loadDevices();
+                    break;
+                case 'scripts':
+                    loadScripts();
+                    break;
+                case 'logs':
+                    loadActivityLogs();
+                    break;
+                case 'security':
+                    loadSecuritySettings();
+                    break;
+                case 'system':
+                    loadSystemSettings();
+                    break;
+            }
+        }
+
+        // Data Loading Functions
+        async function loadDashboardData() {
+            try {
+                showLoading('Loading dashboard data...');
+                
+                const response = await fetch('/.netlify/functions/get-dashboard-data', {
+                    headers: {
+                        'Authorization': 'Bearer ' + getAuthToken()
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    updateDashboardStats(data.stats);
+                    updateRecentActivity(data.activity);
+                    updateSystemStatus(data.system);
+                }
+            } catch (error) {
+                console.error('Error loading dashboard:', error);
+                showToast('Failed to load dashboard data', 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function loadPendingRequests() {
+            try {
+                const response = await fetch('/.netlify/functions/get-pending-requests', {
+                    headers: {
+                        'Authorization': 'Bearer ' + getAuthToken()
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    updatePendingRequestsTable(data.requests);
+                    updatePendingBadge(data.requests.length);
+                }
+            } catch (error) {
+                console.error('Error loading pending requests:', error);
+                showToast('Failed to load pending requests', 'error');
+            }
+        }
+
+        // Event Listeners Setup
+        function setupEventListeners() {
+            // Login form
+            document.getElementById('loginForm').addEventListener('submit', handleLogin);
+            
+            // Keyboard shortcuts
+            document.addEventListener('keydown', handleKeyboardShortcuts);
+            
+            // Mobile menu
+            document.addEventListener('click', function(e) {
+                if (!e.target.closest('.admin-sidebar') && !e.target.closest('.mobile-menu-btn')) {
+                    closeSidebar();
+                }
+            });
+            
+            // Form submissions
+            setupFormHandlers();
+            
+            // Search and filter handlers
+            setupSearchHandlers();
+        }
+
+        function handleKeyboardShortcuts(e) {
+            if (!isLoggedIn) return;
+            
+            if (e.ctrlKey) {
+                switch(e.key) {
+                    case '1':
+                        e.preventDefault();
+                        showSection('dashboard');
+                        break;
+                    case '2':
+                        e.preventDefault();
+                        showSection('pending');
+                        break;
+                    case '3':
+                        e.preventDefault();
+                        showSection('users');
+                        break;
+                    case '4':
+                        e.preventDefault();
+                        showSection('devices');
+                        break;
+                    case '5':
+                        e.preventDefault();
+                        showSection('scripts');
+                        break;
+                    case '6':
+                        e.preventDefault();
+                        showSection('logs');
+                        break;
+                    case '7':
+                        e.preventDefault();
+                        showSection('security');
+                        break;
+                    case '8':
+                        e.preventDefault();
+                        showSection('system');
+                        break;
+                    case 'r':
+                        e.preventDefault();
+                        refreshCurrentSection();
+                        break;
+                    case 's':
+                        e.preventDefault();
+                        saveCurrentForm();
+                        break;
+                    case 'n':
+                        e.preventDefault();
+                        showAddUserModal();
+                        break;
+                    case 'f':
+                        e.preventDefault();
+                        focusSearch();
+                        break;
+                    case 't':
+                        e.preventDefault();
+                        toggleTheme();
+                        break;
+                    case 'l':
+                        e.preventDefault();
+                        showSection('logs');
+                        break;
+                }
+            }
+            
+            if (e.key === 'Escape') {
+                closeAllModals();
+            }
+        }
+
+        // Modal Management
+        function showModal(modalId) {
+            document.getElementById(modalId).classList.add('active');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+
+        function closeAllModals() {
+            document.querySelectorAll('.modal-overlay').forEach(modal => {
+                modal.classList.remove('active');
+            });
+        }
+
+        // Toast Notifications
+        function showToast(message, type = 'info', duration = 3000) {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            
+            const icon = getToastIcon(type);
+            
+            toast.innerHTML = `
+                <div class="toast-icon">${icon}</div>
+                <div class="toast-content">
+                    <div class="toast-message">${message}</div>
+                </div>
+                <button class="toast-close" onclick="removeToast(this)">&times;</button>
+            `;
+            
+            document.getElementById('toastContainer').appendChild(toast);
+            
+            setTimeout(() => {
+                toast.classList.add('show');
+            }, 100);
+            
+            setTimeout(() => {
+                removeToast(toast);
+            }, duration);
+        }
+
+        function getToastIcon(type) {
+            const icons = {
+                success: '✓',
+                error: '✗',
+                warning: '⚠',
+                info: 'ℹ'
+            };
+            return icons[type] || icons.info;
+        }
+
+        function removeToast(toastElement) {
+            const toast = toastElement.closest ? toastElement.closest('.toast') : toastElement;
+            toast.classList.remove('show');
+            setTimeout(() => {
+                if (toast.parentNode) {
+                    toast.parentNode.removeChild(toast);
+                }
+            }, 300);
+        }
+
+        // Utility Functions
+        function getAuthToken() {
+            const savedAuth = localStorage.getItem('adminAuth');
+            if (savedAuth) {
+                const authData = JSON.parse(savedAuth);
+                return authData.token;
+            }
+            return null;
+        }
+
+        function showLoading(text = 'Loading...') {
+            document.getElementById('loadingText').textContent = text;
+            document.getElementById('loadingOverlay').style.display = 'flex';
+        }
+
+        function hideLoading() {
+            document.getElementById('loadingOverlay').style.display = 'none';
+        }
+
+        function toggleSidebar() {
+            const sidebar = document.getElementById('adminSidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            
+            sidebar.classList.toggle('active');
+            overlay.classList.toggle('active');
+        }
+
+        function closeSidebar() {
+            const sidebar = document.getElementById('adminSidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            
+            sidebar.classList.remove('active');
+            overlay.classList.remove('active');
+        }
+
+        // Auto-refresh functionality
+        function setupAutoRefresh() {
+            const refreshRate = localStorage.getItem('refreshRate') || 60000; // 1 minute default
+            
+            if (refreshRate > 0) {
+                refreshInterval = setInterval(() => {
+                    if (currentSection === 'dashboard') {
+                        loadDashboardData();
+                    }
+                    loadNotifications();
+                }, refreshRate);
+            }
+        }
+
+        // PWA Support
+        function setupPWA() {
+            window.addEventListener('beforeinstallprompt', (e) => {
+                e.preventDefault();
+                deferredPrompt = e;
+                showPWAInstallBanner();
+            });
+        }
+
+        function showPWAInstallBanner() {
+            document.getElementById('pwaInstallBanner').style.display = 'block';
+        }
+
+        function dismissPWABanner() {
+            document.getElementById('pwaInstallBanner').style.display = 'none';
+        }
+
+        async function installPWA() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                if (outcome === 'accepted') {
+                    showToast('App installed successfully!', 'success');
+                }
+                deferredPrompt = null;
+                dismissPWABanner();
+            }
+        }
+
+        // Placeholder functions for functionality to be implemented
+        function refreshDashboard() { loadDashboardData(); }
+        function exportReport() { showToast('Exporting report...', 'info'); }
+        function refreshActivity() { loadDashboardData(); }
+        function showAddUserModal() { showModal('addUserModal'); }
+        function generateBackupCodes() { showToast('Generating backup codes...', 'info'); }
+        function emergencyShutdown() { showConfirmDialog('Emergency Shutdown', 'This will immediately disable all system access. Are you sure?', 'shutdown'); }
+        function approveAll() { showToast('Approving all pending requests...', 'info'); }
+        function denyAll() { showConfirmDialog('Deny All Requests', 'This will deny all pending requests. Are you sure?', 'denyAll'); }
+        function refreshPending() { loadPendingRequests(); }
+        function refreshUsers() { loadActiveUsers(); }
+        function exportUsers() { showToast('Exporting user list...', 'info'); }
+        function refreshDevices() { loadDevices(); }
+        function exportDevices() { showToast('Exporting device data...', 'info'); }
+        function showBlockDeviceModal() { showModal('blockDeviceModal'); }
+        function refreshScripts() { loadScripts(); }
+        function showUploadScriptModal() { showModal('uploadScriptModal'); }
+        function showScriptSettingsModal() { showModal('scriptSettingsModal'); }
+        function refreshLogs() { loadActivityLogs(); }
+        function exportLogs() { showToast('Exporting logs...', 'info'); }
+        function clearOldLogs() { showConfirmDialog('Clear Old Logs', 'This will permanently delete logs older than 90 days. Are you sure?', 'clearLogs'); }
+        function showNotifications() { showModal('notificationsModal'); }
+        function showSettings() { showModal('settingsModal'); }
+
+        // Confirmation Dialog
+        function showConfirmDialog(title, message, action) {
+            document.getElementById('confirmTitle').textContent = title;
+            document.getElementById('confirmMessage').textContent = message;
+            pendingConfirmAction = action;
+            showModal('confirmModal');
+        }
+
+        function executeConfirmedAction() {
+            if (pendingConfirmAction) {
+                // Execute the confirmed action
+                showToast('Action executed: ' + pendingConfirmAction, 'success');
+                pendingConfirmAction = null;
+            }
+            closeModal('confirmModal');
+        }
+
+        // Additional utility functions would be implemented here
+        function updateDashboardStats(stats) {
+            if (stats) {
+                document.getElementById('totalUsers').textContent = stats.totalUsers || 0;
+                document.getElementById('pendingRequests').textContent = stats.pendingRequests || 0;
+                document.getElementById('activeUsers').textContent = stats.activeUsers || 0;
+                document.getElementById('blockedDevices').textContent = stats.blockedDevices || 0;
+            }
+        }
+
+        function updatePendingBadge(count) {
+            const badge = document.getElementById('pendingBadge');
+            if (count > 0) {
+                badge.textContent = count;
+                badge.style.display = 'inline-block';
+            } else {
+                badge.style.display = 'none';
+            }
+        }
+
+        function updateRecentActivity(activities) {
+            // Implementation for updating recent activity feed
+        }
+
+        function updateSystemStatus(systemData) {
+            // Implementation for updating system status
+        }
+
+        function loadActiveUsers() {
+            // Implementation for loading active users
+        }
+
+        function loadDevices() {
+            // Implementation for loading device data
+        }
+
+        function loadScripts() {
+            // Implementation for loading script data
+        }
+
+        function loadActivityLogs() {
+            // Implementation for loading activity logs
+        }
+
+        function loadSecuritySettings() {
+            // Implementation for loading security settings
+        }
+
+        function loadSystemSettings() {
+            // Implementation for loading system settings
+        }
+
+        function loadNotifications() {
+            // Implementation for loading notifications
+        }
+
+        function setupFormHandlers() {
+            // Implementation for form handling
+        }
+
+        function setupSearchHandlers() {
+            // Implementation for search functionality
+        }
+
+        function refreshCurrentSection() {
+            loadSectionData(currentSection);
+        }
+
+        function saveCurrentForm() {
+            // Implementation for saving current form
+        }
+
+        function focusSearch() {
+            const searchInput = document.querySelector('.search-input');
+            if (searchInput) {
+                searchInput.focus();
+            }
+        }
+
+        // Initialize everything when page loads
+        window.addEventListener('load', function() {
+            // Additional initialization code
+        });
+    </script>
+</body>
+</html>
