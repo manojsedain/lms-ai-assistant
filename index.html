@@ -271,27 +271,55 @@ async function validateProductKey(key) {
 
 // Keep your existing fallback function unchanged
 function validateKeyFallback(key) {
+    console.log('[LMS AI] Fallback validation for key:', key);
+    
+    // ===== PATTERN-BASED VALIDATION FOR LMS-AI KEYS =====
+    const lmsPattern = /^LMS-AI-2025-[A-Z0-9]{8}$/;
+    if (lmsPattern.test(key)) {
+        console.log('[LMS AI] Valid LMS-AI pattern detected');
+        return {
+            valid: true,
+            message: "Valid LMS AI key! Preparing your personalized script...",
+            userData: {
+                name: "LMS AI User",
+                email: "user@example.com",
+                type: "STANDARD",
+                expiry: "2025-12-31",
+                active: true,
+                encryptionKey: "lms-ai-key-2025"
+            }
+        };
+    }
+    
+    // ===== EXISTING FALLBACK KEYS =====
     const fallbackKeys = {
         "DEMO-2025-TEST": {
             name: "Demo User",
+            email: "demo@example.com",
+            type: "DEMO",
             expiry: "2025-12-31",
             active: true,
             encryptionKey: "demo-secret-key-2025"
         },
         "ADMIN-2025-MASTER": {
-            name: "Administrator", 
+            name: "Administrator",
+            email: "admin@example.com", 
+            type: "ADMIN",
             expiry: "2099-12-31",
             active: true,
             encryptionKey: "admin-master-key-2025"
         },
         "JOHN-2025-ABC123": {
             name: "John Smith",
+            email: "john@example.com",
+            type: "STANDARD",
             expiry: "2025-12-31",
             active: true,
             encryptionKey: "john-secret-key-2025"
         }
     };
     
+    // ===== VALIDATION LOGIC =====
     if (!key || key.trim() === '') {
         return { valid: false, message: "Please enter a product key" };
     }
