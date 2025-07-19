@@ -2579,42 +2579,123 @@ function savePayPalSettings() {
             }
         }
 
-        // Enhanced login with 2FA
-        const originalAttemptLogin = attemptLogin;
-        attemptLogin = async function() {
+// ===== LOGIN SYSTEM WITH 2FA =====
+        async function attemptLogin() {
             const password = document.getElementById('loginPassword').value;
-            const currentPassword = getCurrentAdminPassword();
+            const errorDiv = document.getElementById('errorMessage');
             
-            if (password !== currentPassword) {
-                document.getElementById('errorMessage').textContent = '❌ Invalid password!';
-                document.getElementById('errorMessage').classList.remove('hidden');
-                return;
-            }
-            
-            // Check if 2FA is enabled
+            // Load current admin password from settings
             const stored = localStorage.getItem('lms_ai_system_settings');
-            let require2FA = false;
+            let currentPassword = 'admin2025'; // Default
             
             if (stored) {
                 try {
                     const settings = JSON.parse(stored);
-                    require2FA = settings.twoFactorEnabled !== 'false';
+                    currentPassword = settings.adminPassword || 'admin2025';
                 } catch (e) {
-                    // Ignore
+                    console.warn('Could not load settings, using default password');
                 }
             }
             
-            if (require2FA) {
-                const success = await prompt2FA();
-                if (!success) return;
+            console.log('[DEBUG] Current admin password:', currentPassword);
+            
+            if (password !== currentPassword) {
+                errorDiv.textContent = '❌ Invalid password! Access denied.';
+                errorDiv.classList.remove('hidden');
+                document.getElementById('loginPassword').value = '';
+                document.getElementById('loginPassword').style.borderColor = '#e74c3c';
+                
+                setTimeout(() => {
+                    errorDiv.classList.add('hidden');
+                    document.getElementById('loginPassword').style.borderColor = '#bdc3c7';
+                }, 3000);
+                
+                logActivity('admin_login_failed', 'Failed login attempt');
+                return;
             }
             
-            // Proceed with normal login
+            // Check if 2FA is enabled
+            let require2FA = false;
+            let settings = {};
+            
+            if (stored) {
+                try {
+                    settings = JSON.parse(stored);
+                    require2FA = settings.twoFactorEnabled && settings.twoFactorEnabled !== 'false';
+                } catch (e) {
+                    console.warn('Could not parse 2FA settings');
+                }
+            }
+            
+            // Handle 2FA if enabled
+            if (require2FA) {
+                const success = await handle2FA(settings);
+                if (!success) {
+                    errorDiv.textContent = '❌ 2FA verification failed!';
+                    errorDiv.classList.remove('hidden');
+                    document.getElementById('loginPassword').value = '';
+                    setTimeout(() => {
+                        errorDiv.classList.add('hidden');
+                    }, 3000);
+                    return;
+                }
+            }
+            
+            // Successful login
             document.getElementById('loginContainer').style.display = 'none';
             document.getElementById('adminContainer').style.display = 'block';
             initializeAdmin();
             logActivity('admin_login', 'Administrator logged in' + (require2FA ? ' with 2FA' : ''));
-        };
+        }
+
+        async function handle2FA(settings) {
+            if (settings.twoFactorEnabled === 'email') {
+                const code = Math.random().toString(36).substring(2, 8).toUpperCase();
+                
+                try {
+                    // Use the existing sendEmailNotification function
+                    const originalEmail = systemSettings.notificationEmail;
+                    systemSettings.notificationEmail = settings.twoFactorEmail || settings.notificationEmail;
+                    
+                    await sendEmailNotification('2FA Login Code', {
+                        message: `Your login verification code is: ${code}\n\nThis code expires in 5 minutes.\n\nIf you didn't request this, please change your password immediately.`,
+                        code: code
+                    });
+                    
+                    systemSettings.notificationEmail = originalEmail;
+                    
+                    const userCode = prompt('🔐 Two-Factor Authentication Required\n\nA verification code has been sent to your email.\nEnter the 6-digit code:');
+                    
+                    return userCode === code;
+                } catch (error) {
+                    console.error('2FA email failed:', error);
+                    alert('❌ Failed to send 2FA code. Proceeding without 2FA verification.');
+                    return true; // Allow login if email fails
+                }
+            } else if (settings.twoFactorEnabled === 'backup') {
+                const userCode = prompt('🔐 Two-Factor Authentication Required\n\nEnter one of your backup codes:');
+                if (!userCode) return false;
+                
+                const codes = settings.backupCodes || [];
+                const isValidCode = codes.some(code => code.includes(userCode.toUpperCase()));
+                
+                if (isValidCode) {
+                    // Remove used backup code
+                    settings.backupCodes = codes.filter(code => !code.includes(userCode.toUpperCase()));
+                    localStorage.setItem('lms_ai_system_settings', JSON.stringify(settings));
+                    
+                    if (settings.backupCodes.length === 0) {
+                        alert('⚠️ Warning: You have used your last backup code!\n\nPlease generate new codes in the 2FA settings.');
+                    }
+                    
+                    return true;
+                }
+                
+                return false;
+            }
+            
+            return true; // Default to success if 2FA type not recognized
+        }
 
         async function prompt2FA() {
             const settings = JSON.parse(localStorage.getItem('lms_ai_system_settings') || '{}');
