@@ -936,13 +936,18 @@ Happy licensing! 🚀</textarea>
         }
 
 async function sendTestEmail() {
-            const testEmail = document.getElementById('testEmailAddress').value.trim();
-            const testSubject = document.getElementById('testEmailSubject').value.trim();
-            const testMessage = document.getElementById('testEmailMessage').value.trim();
+            let testEmail = document.getElementById('testEmailAddress').value.trim();
+            const testSubject = document.getElementById('testEmailSubject').value.trim() || 'LMS AI Admin Test';
+            const testMessage = document.getElementById('testEmailMessage').value.trim() || 'This is a test email from your LMS AI Assistant admin panel.';
             
-            // Validation
+            // If no test email entered, use notification email
             if (!testEmail) {
-                alert('❌ Please enter a test email address');
+                testEmail = document.getElementById('notificationEmail').value.trim();
+            }
+            
+            // Still no email found
+            if (!testEmail) {
+                alert('❌ Please enter an email address!\n\nEither:\n• Fill in "Test Email Address" field, OR\n• Fill in "Notification Email" field');
                 return;
             }
             
@@ -965,7 +970,7 @@ async function sendTestEmail() {
             testBtn.textContent = '📧 Sending...';
             
             try {
-                console.log('Starting test email...');
+                console.log('Starting test email to:', testEmail);
                 
                 // Temporarily use test email
                 const originalEmail = systemSettings.notificationEmail;
@@ -980,7 +985,7 @@ async function sendTestEmail() {
                 // Restore original email
                 systemSettings.notificationEmail = originalEmail;
                 
-                alert('✅ Test email sent successfully!\n\n📧 Check your inbox: ' + testEmail + '\n\n💡 If you don\'t see it, check your spam folder.\n\nGmail may take 1-2 minutes to deliver.');
+                alert('✅ Test email sent successfully!\n\n📧 Sent to: ' + testEmail + '\n\n💡 Check your inbox and spam folder.\n\nGmail may take 1-2 minutes to deliver.');
                 logActivity('test_email_sent', `Test email sent to ${testEmail} via ${systemSettings.emailService}`);
                 
             } catch (error) {
