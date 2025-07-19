@@ -553,15 +553,38 @@ ${masterScript}
             });
         }
         
-        function checkAdminPassword() {
+function checkAdminPassword() {
             const password = document.getElementById('adminPassword').value;
-            const correctPassword = 'admin2025';
+            
+            // Get current admin password (check localStorage)
+            let correctPassword = 'admin2025'; // Default
+            
+            // Check system settings first
+            const systemSettings = localStorage.getItem('lms_ai_system_settings');
+            if (systemSettings) {
+                try {
+                    const settings = JSON.parse(systemSettings);
+                    if (settings.adminPassword) {
+                        correctPassword = settings.adminPassword;
+                    }
+                } catch (e) {
+                    console.warn('Could not load system settings');
+                }
+            }
+            
+            // Check dedicated password storage
+            const storedPassword = localStorage.getItem('lms_ai_admin_password');
+            if (storedPassword) {
+                correctPassword = storedPassword;
+            }
+            
+            console.log('[DEBUG] Current admin password:', correctPassword);
             
             if (password === correctPassword) {
                 window.open('./admin.html', '_blank');
                 document.querySelector('[style*="position: fixed"]').remove();
             } else {
-                alert('Invalid password! Access denied.');
+                alert('❌ Invalid password! Access denied.');
                 document.getElementById('adminPassword').value = '';
                 document.getElementById('adminPassword').style.borderColor = '#e74c3c';
                 
