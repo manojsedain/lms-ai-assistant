@@ -503,289 +503,23 @@ alert('LMS AI Assistant loaded successfully!');
             }, 5000);
         }
 function generatePersonalizedScript(userData, masterScript) {
-            console.log('🔐 Generating secure script for:', userData.name);
+            console.log('🔐 Generating secure loader script for:', userData.name);
             
             // Get the current license key being validated
             const currentKey = document.getElementById('productKey').value.trim();
             
-            // Generate authorized domains based on common LMS patterns
+            // Generate authorized domains
             const authorizedDomains = [
                 'canvas', 'blackboard', 'moodle', 'brightspace', 'schoology', 
                 'edmodo', 'google.classroom', 'teams.microsoft', 'learn',
                 'lms', 'elearning', 'education', 'university', 'college', 'school'
             ];
             
-            // Create the actual LMS AI code (this is what runs after validation)
-            const actualLMSCode = `
-// ===== LMS AI ASSISTANT CORE =====
-const LMS_AI_SIGNATURE = 'LMS_AI_AUTHENTICATED_${Date.now()}';
-console.log('🚀 LMS AI Assistant v2.0 - Licensed to: ${userData.name}');
-
-(function() {
-    'use strict';
-    
-    function initializeLMSAI() {
-        console.log('✅ LMS AI Assistant initialized for ${userData.name}');
-        console.log('📅 License valid until: ${userData.expiry}');
-        
-        // Add LMS enhancement features
-        addGradeCalculator();
-        addQuickSubmit();
-        addStudentTracker();
-        addAutoSave();
-        showLMSAIWelcome();
-    }
-    
-    function addGradeCalculator() {
-        console.log('📊 Grade Calculator loaded');
-        
-        // Add grade calculator button to page
-        const calculator = document.createElement('div');
-        calculator.id = 'lms-ai-calculator';
-        calculator.innerHTML = \`
-            <div style="position: fixed; top: 10px; right: 10px; background: #2c3e50; color: white; padding: 15px; border-radius: 10px; z-index: 10000; box-shadow: 0 5px 15px rgba(0,0,0,0.3); cursor: pointer;">
-                <h4 style="margin: 0 0 10px 0;">📊 LMS AI Calculator</h4>
-                <p style="margin: 0; font-size: 12px;">Click to calculate grades</p>
-                <p style="margin: 5px 0 0 0; font-size: 11px; opacity: 0.8;">Licensed to: ${userData.name}</p>
-            </div>
-        \`;
-        
-        calculator.addEventListener('click', function() {
-            alert('📊 Grade Calculator activated!\\n\\nThis would show grade calculation tools.\\n\\nLicensed to: ${userData.name}');
-        });
-        
-        document.body.appendChild(calculator);
-        
-        // Auto-hide after 10 seconds
-        setTimeout(() => {
-            if (calculator.parentNode) {
-                calculator.style.opacity = '0.3';
-                calculator.style.transform = 'scale(0.8)';
-            }
-        }, 10000);
-    }
-    
-    function addQuickSubmit() {
-        console.log('🚀 Quick Submit features loaded');
-        
-        // Find all submit buttons and enhance them
-        const submitButtons = document.querySelectorAll('input[type="submit"], button[type="submit"]');
-        console.log('Found', submitButtons.length, 'submit buttons to enhance');
-        
-        submitButtons.forEach((button, index) => {
-            button.addEventListener('click', function(e) {
-                console.log('📝 LMS AI: Enhanced submit triggered for button', index);
-                
-                // Add visual feedback
-                button.style.background = 'linear-gradient(45deg, #27ae60, #2ecc71)';
-                button.style.transform = 'scale(0.95)';
-                
-                setTimeout(() => {
-                    button.style.transform = 'scale(1)';
-                }, 150);
-            });
+            // Generate encryption key for this user
+            const encryptionKey = generateUserEncryptionKey(userData, currentKey);
             
-            // Add enhancement indicator
-            button.title = button.title + ' [Enhanced by LMS AI]';
-        });
-    }
-    
-    function addStudentTracker() {
-        console.log('📈 Student Tracker features loaded');
-        
-        // Track time spent on page
-        let startTime = Date.now();
-        let totalTime = 0;
-        
-        // Track when user leaves/returns to page
-        document.addEventListener('visibilitychange', function() {
-            if (document.hidden) {
-                totalTime += Date.now() - startTime;
-                console.log('📊 Session paused. Total time so far:', Math.floor(totalTime / 1000), 'seconds');
-            } else {
-                startTime = Date.now();
-                console.log('📊 Session resumed');
-            }
-        });
-        
-        // Save session data when leaving
-        window.addEventListener('beforeunload', function() {
-            totalTime += Date.now() - startTime;
-            const sessionData = {
-                totalTime: Math.floor(totalTime / 1000),
-                url: window.location.href,
-                timestamp: new Date().toISOString(),
-                user: '${userData.name}'
-            };
-            localStorage.setItem('lms_ai_session_' + Date.now(), JSON.stringify(sessionData));
-            console.log('📊 Session saved:', sessionData);
-        });
-    }
-    
-    function addAutoSave() {
-        console.log('💾 Auto-Save features loaded');
-        
-        let saveCount = 0;
-        
-        // Auto-save form data every 30 seconds
-        const autoSaveInterval = setInterval(() => {
-            const forms = document.querySelectorAll('form');
-            let savedForms = 0;
-            
-            forms.forEach((form, index) => {
-                const formData = new FormData(form);
-                const savedData = {};
-                let hasData = false;
-                
-                for (let [key, value] of formData.entries()) {
-                    if (value && value.trim().length > 0) {
-                        savedData[key] = value;
-                        hasData = true;
-                    }
-                }
-                
-                if (hasData) {
-                    const saveKey = 'lms_ai_autosave_' + window.location.pathname + '_' + index;
-                    localStorage.setItem(saveKey, JSON.stringify({
-                        data: savedData,
-                        timestamp: new Date().toISOString(),
-                        user: '${userData.name}'
-                    }));
-                    savedForms++;
-                }
-            });
-            
-            if (savedForms > 0) {
-                saveCount++;
-                console.log(\`💾 Auto-save #\${saveCount}: Saved \${savedForms} forms\`);
-                
-                // Show brief save indicator
-                showSaveIndicator();
-            }
-        }, 30000);
-        
-        // Restore saved data on page load
-        setTimeout(() => {
-            restoreSavedData();
-        }, 2000);
-        
-        function showSaveIndicator() {
-            const indicator = document.createElement('div');
-            indicator.style.cssText = \`
-                position: fixed; bottom: 20px; right: 20px; z-index: 10000;
-                background: #27ae60; color: white; padding: 10px 15px;
-                border-radius: 5px; font-size: 12px; opacity: 0.9;
-            \`;
-            indicator.textContent = '💾 Auto-saved';
-            document.body.appendChild(indicator);
-            
-            setTimeout(() => {
-                if (indicator.parentNode) {
-                    indicator.parentNode.removeChild(indicator);
-                }
-            }, 2000);
-        }
-        
-        function restoreSavedData() {
-            const forms = document.querySelectorAll('form');
-            let restoredCount = 0;
-            
-            forms.forEach((form, index) => {
-                const saveKey = 'lms_ai_autosave_' + window.location.pathname + '_' + index;
-                const savedDataString = localStorage.getItem(saveKey);
-                
-                if (savedDataString) {
-                    try {
-                        const savedInfo = JSON.parse(savedDataString);
-                        const savedData = savedInfo.data;
-                        
-                        Object.keys(savedData).forEach(key => {
-                            const input = form.querySelector(\`[name="\${key}"]\`);
-                            if (input && !input.value) {
-                                input.value = savedData[key];
-                                input.style.background = '#fff3cd';
-                                input.title = 'Restored by LMS AI Auto-Save on ' + new Date(savedInfo.timestamp).toLocaleString();
-                                
-                                setTimeout(() => {
-                                    input.style.background = '';
-                                }, 3000);
-                                
-                                restoredCount++;
-                            }
-                        });
-                    } catch (e) {
-                        console.warn('Failed to restore saved data for form', index);
-                    }
-                }
-            });
-            
-            if (restoredCount > 0) {
-                console.log('🔄 Restored', restoredCount, 'auto-saved fields');
-            }
-        }
-    }
-    
-    function showLMSAIWelcome() {
-        const welcome = document.createElement('div');
-        welcome.style.cssText = \`
-            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            background: linear-gradient(135deg, #2c3e50, #3498db); color: white;
-            padding: 30px; border-radius: 15px; z-index: 100000;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3); text-align: center;
-            font-family: Arial, sans-serif; max-width: 400px;
-        \`;
-        
-        welcome.innerHTML = \`
-            <h3 style="margin: 0 0 15px 0;">🚀 LMS AI Assistant Active!</h3>
-            <p style="margin: 0 0 10px 0;">Welcome back, ${userData.name}!</p>
-            <p style="margin: 0 0 15px 0; font-size: 14px; opacity: 0.9;">
-                License: ${userData.type || 'STANDARD'}<br>
-                Valid until: ${userData.expiry}
-            </p>
-            <div style="font-size: 12px; opacity: 0.8; border-top: 1px solid rgba(255,255,255,0.3); padding-top: 15px;">
-                <strong>Features Loaded:</strong><br>
-                ✅ Grade Calculator ✅ Quick Submit<br>
-                ✅ Student Tracker ✅ Auto-Save
-            </div>
-            <button onclick="this.parentNode.remove()" style="
-                margin-top: 15px; padding: 8px 15px; background: rgba(255,255,255,0.2);
-                border: none; border-radius: 5px; color: white; cursor: pointer;
-            ">Got it!</button>
-        \`;
-        
-        document.body.appendChild(welcome);
-        
-        // Auto-remove after 8 seconds
-        setTimeout(() => {
-            if (welcome.parentNode) {
-                welcome.style.opacity = '0';
-                welcome.style.transform = 'translate(-50%, -50%) scale(0.9)';
-                welcome.style.transition = 'all 0.3s';
-                setTimeout(() => {
-                    if (welcome.parentNode) {
-                        welcome.parentNode.removeChild(welcome);
-                    }
-                }, 300);
-            }
-        }, 8000);
-    }
-    
-    // Initialize LMS AI
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initializeLMSAI);
-    } else {
-        initializeLMSAI();
-    }
-})();
-
-// ===== END LMS AI CORE =====
-`;
-
-            // Generate a simple validation key for this script
-            const validationKey = generateSimpleValidationKey(userData, currentKey);
-            
-            // Create the secure wrapper script
-            const hybridScript = `// ==UserScript==
+            // Create the secure loader script
+            const loaderScript = `// ==UserScript==
 // @name         LMS AI Assistant Pro - ${userData.name}
 // @namespace    https://lms-ai-assistant.com/
 // @version      2.0.0
@@ -795,6 +529,10 @@ console.log('🚀 LMS AI Assistant v2.0 - Licensed to: ${userData.name}');
 // @match        https://*.edu:*/*
 // @match        https://*.instructure.com/*
 // @match        https://*.blackboard.com/*
+// @match        https://*.moodle.*/*
+// @match        https://*.brightspace.com/*
+// @match        https://*.schoology.com/*
+// @match        https://classroom.google.com/*
 // @grant        none
 // @license      Commercial - Licensed to ${userData.name}
 // @homepageURL  https://lms-ai-assistant.com/
@@ -802,14 +540,14 @@ console.log('🚀 LMS AI Assistant v2.0 - Licensed to: ${userData.name}');
 // ==/UserScript==
 
 /*
- * LMS AI Assistant Pro v2.0.0
+ * LMS AI Assistant Pro v2.0.0 - Secure Loader
  * Licensed to: ${userData.name}
  * License Key: ${currentKey}
  * Valid Until: ${userData.expiry}
  * License Type: ${userData.type || 'STANDARD'}
  * 
- * This software is protected by copyright law and international treaties.
- * Unauthorized reproduction or distribution is prohibited.
+ * This is a secure loader that fetches and decrypts the main LMS AI script.
+ * The actual functionality is stored securely on the server.
  */
 
 (function() {
@@ -821,18 +559,21 @@ console.log('🚀 LMS AI Assistant v2.0 - Licensed to: ${userData.name}');
         USER_NAME: '${userData.name}',
         EXPIRY_DATE: '${userData.expiry}',
         LICENSE_TYPE: '${userData.type || 'STANDARD'}',
-        VALIDATION_KEY: '${validationKey}',
+        ENCRYPTION_KEY: '${encryptionKey}',
         AUTHORIZED_DOMAINS: ${JSON.stringify(authorizedDomains)},
-        VALIDATION_ENDPOINT: '${window.location.origin}/.netlify/functions/validate-license'
+        SCRIPT_URL: '${window.location.origin}/script/lms-ai-script.js',
+        VALIDATION_URL: '${window.location.origin}/.netlify/functions/validate-license',
+        LOADER_VERSION: '2.0.0'
     };
     
     let validationAttempts = 0;
     const MAX_ATTEMPTS = 3;
+    let scriptLoaded = false;
     
-    // ===== DOMAIN AND EXPIRY VALIDATION =====
+    // ===== DOMAIN AND LICENSE VALIDATION =====
     function performSecurityValidation() {
         try {
-            console.log('🔍 LMS AI: Performing security validation...');
+            console.log('🔍 LMS AI Loader: Performing security validation...');
             
             const currentDomain = window.location.hostname.toLowerCase();
             const now = new Date();
@@ -845,31 +586,28 @@ console.log('🚀 LMS AI Assistant v2.0 - Licensed to: ${userData.name}');
             );
             
             if (!isDomainAuthorized) {
-                console.error('❌ Domain not authorized:', currentDomain);
                 return { 
                     valid: false, 
-                    reason: \`Domain "\${currentDomain}" is not authorized for LMS AI Assistant.\\n\\nThis script only works on educational LMS platforms.\` 
+                    reason: \`❌ Domain "\${currentDomain}" is not authorized.\\n\\nThis script only works on educational LMS platforms.\` 
                 };
             }
             
-            // Step 2: Expiry Validation
+            // Step 2: License Expiry Check
             if (now > expiryDate) {
-                console.error('❌ License expired:', SECURITY_CONFIG.EXPIRY_DATE);
                 return { 
                     valid: false, 
-                    reason: \`License expired on \${SECURITY_CONFIG.EXPIRY_DATE}.\\n\\nPlease renew your subscription to continue using LMS AI Assistant.\` 
+                    reason: \`❌ License expired on \${SECURITY_CONFIG.EXPIRY_DATE}.\\n\\nPlease renew your subscription to continue using LMS AI Assistant.\` 
                 };
             }
             
-            // Step 3: Time-based validation (prevents old scripts from working forever)
+            // Step 3: Time-based validation
             const daysSinceEpoch = Math.floor(now.getTime() / (1000 * 60 * 60 * 24));
             const expiryDays = Math.floor(expiryDate.getTime() / (1000 * 60 * 60 * 24));
             
             if (daysSinceEpoch > expiryDays) {
-                console.error('❌ License validation period exceeded');
                 return { 
                     valid: false, 
-                    reason: 'License validation period has exceeded. Please download a fresh script from the portal.' 
+                    reason: '❌ License validation period exceeded. Please download a fresh script.' 
                 };
             }
             
@@ -877,36 +615,27 @@ console.log('🚀 LMS AI Assistant v2.0 - Licensed to: ${userData.name}');
             return { valid: true, method: 'local' };
             
         } catch (error) {
-            console.error('❌ Security validation error:', error);
             return { 
                 valid: false, 
-                reason: 'Security validation failed: ' + error.message 
+                reason: '❌ Security validation failed: ' + error.message 
             };
         }
     }
     
-    // ===== SERVER VALIDATION (OPTIONAL BACKUP) =====
+    // ===== SERVER VALIDATION =====
     async function performServerValidation() {
         try {
-            console.log('🌐 LMS AI: Checking with server...');
-            
-            // Only check server once per day to reduce load
-            const lastCheck = localStorage.getItem('lms_ai_last_server_check');
-            const oneDayAgo = Date.now() - (24 * 60 * 60 * 1000);
-            
-            if (lastCheck && parseInt(lastCheck) > oneDayAgo) {
-                console.log('✅ Server check recently passed');
-                return { valid: true, method: 'cached' };
-            }
+            console.log('🌐 LMS AI Loader: Checking license with server...');
             
             const validationPayload = {
                 licenseKey: SECURITY_CONFIG.LICENSE_KEY,
                 domain: window.location.hostname,
                 userAgent: navigator.userAgent.substring(0, 50),
-                timestamp: Date.now()
+                timestamp: Date.now(),
+                loaderVersion: SECURITY_CONFIG.LOADER_VERSION
             };
             
-            const response = await fetch(SECURITY_CONFIG.VALIDATION_ENDPOINT, {
+            const response = await fetch(SECURITY_CONFIG.VALIDATION_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(validationPayload)
@@ -916,13 +645,12 @@ console.log('🚀 LMS AI Assistant v2.0 - Licensed to: ${userData.name}');
                 const result = await response.json();
                 
                 if (result.valid) {
-                    localStorage.setItem('lms_ai_last_server_check', Date.now().toString());
                     console.log('✅ Server validation successful');
-                    return { valid: true, method: 'server' };
+                    return { valid: true, method: 'server', decryptionKey: result.decryptionKey };
                 } else {
                     return { 
                         valid: false, 
-                        reason: result.message || 'Server validation failed' 
+                        reason: result.message || '❌ Server validation failed' 
                     };
                 }
             } else {
@@ -936,25 +664,135 @@ console.log('🚀 LMS AI Assistant v2.0 - Licensed to: ${userData.name}');
         }
     }
     
-    // ===== EXECUTE LMS AI CODE =====
-    function executeLMSAI(validationResult) {
+    // ===== LOAD AND DECRYPT MAIN SCRIPT =====
+    async function loadMainScript(validationResult) {
         try {
-            console.log('🚀 LMS AI: Executing script with', validationResult.method, 'validation...');
+            console.log('📦 LMS AI Loader: Loading main script...');
             
-            // Execute the actual LMS AI code
-            ${actualLMSCode}
+            // Fetch the main LMS AI script
+            const response = await fetch(SECURITY_CONFIG.SCRIPT_URL + '?v=' + Date.now(), {
+                cache: 'no-cache',
+                headers: {
+                    'X-LMS-AI-License': SECURITY_CONFIG.LICENSE_KEY,
+                    'X-LMS-AI-User': SECURITY_CONFIG.USER_NAME
+                }
+            });
             
+            if (!response.ok) {
+                throw new Error(\`Failed to load script: HTTP \${response.status}\`);
+            }
+            
+            let scriptContent = await response.text();
+            
+            // Check if script is encrypted
+            if (scriptContent.includes('ENCRYPTED_LMS_AI_SCRIPT')) {
+                console.log('🔓 LMS AI Loader: Decrypting main script...');
+                scriptContent = decryptScript(scriptContent, validationResult.decryptionKey || SECURITY_CONFIG.ENCRYPTION_KEY);
+            }
+            
+            // Validate script content
+            if (!scriptContent || scriptContent.length < 100) {
+                throw new Error('Invalid script content received');
+            }
+            
+            // Execute the main LMS AI script
+            console.log('🚀 LMS AI Loader: Executing main script...');
+            
+            // Create script context with user info
+            const scriptContext = {
+                LMS_AI_USER: SECURITY_CONFIG.USER_NAME,
+                LMS_AI_LICENSE: SECURITY_CONFIG.LICENSE_KEY,
+                LMS_AI_EXPIRY: SECURITY_CONFIG.EXPIRY_DATE,
+                LMS_AI_TYPE: SECURITY_CONFIG.LICENSE_TYPE,
+                LMS_AI_LOADER_VERSION: SECURITY_CONFIG.LOADER_VERSION
+            };
+            
+            // Inject context and execute
+            const contextScript = \`
+                window.LMS_AI_CONTEXT = \${JSON.stringify(scriptContext)};
+                \${scriptContent}
+            \`;
+            
+            eval(contextScript);
+            
+            scriptLoaded = true;
             console.log('✅ LMS AI Assistant loaded successfully for', SECURITY_CONFIG.USER_NAME);
             
-            // Track usage
-            const usage = JSON.parse(localStorage.getItem('lms_ai_usage') || '{}');
-            const today = new Date().toISOString().split('T')[0];
-            usage[today] = (usage[today] || 0) + 1;
-            localStorage.setItem('lms_ai_usage', JSON.stringify(usage));
+            // Track successful load
+            trackScriptUsage(validationResult.method);
+            
+            // Send notification to admin
+            notifyAdminOfUsage();
             
         } catch (error) {
-            console.error('❌ LMS AI execution failed:', error);
-            showErrorMessage('LMS AI execution failed: ' + error.message);
+            console.error('❌ Failed to load main script:', error);
+            showErrorMessage('Failed to load LMS AI script: ' + error.message + '\\n\\nPlease check your internet connection and try refreshing the page.');
+        }
+    }
+    
+    // ===== SCRIPT DECRYPTION =====
+    function decryptScript(encryptedContent, key) {
+        try {
+            // Simple decryption - you can enhance this
+            const lines = encryptedContent.split('\\n');
+            const decryptedLines = lines.map(line => {
+                if (line.includes('ENCRYPTED_LMS_AI_SCRIPT')) {
+                    return line.replace('ENCRYPTED_LMS_AI_SCRIPT', '');
+                }
+                return line;
+            });
+            
+            return decryptedLines.join('\\n');
+        } catch (error) {
+            console.error('Decryption failed:', error);
+            return encryptedContent; // Return as-is if decryption fails
+        }
+    }
+    
+    // ===== USAGE TRACKING =====
+    function trackScriptUsage(method) {
+        try {
+            const usage = JSON.parse(localStorage.getItem('lms_ai_usage_tracking') || '{}');
+            const today = new Date().toISOString().split('T')[0];
+            
+            if (!usage[today]) {
+                usage[today] = { loads: 0, method: [] };
+            }
+            
+            usage[today].loads++;
+            usage[today].method.push(method);
+            
+            // Keep only last 30 days
+            const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+            Object.keys(usage).forEach(date => {
+                if (date < thirtyDaysAgo) {
+                    delete usage[date];
+                }
+            });
+            
+            localStorage.setItem('lms_ai_usage_tracking', JSON.stringify(usage));
+        } catch (error) {
+            console.warn('Usage tracking failed:', error);
+        }
+    }
+    
+    // ===== ADMIN NOTIFICATION =====
+    async function notifyAdminOfUsage() {
+        try {
+            // Send usage notification to admin (non-blocking)
+            fetch('${window.location.origin}/.netlify/functions/notify-usage', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    licenseKey: SECURITY_CONFIG.LICENSE_KEY,
+                    userName: SECURITY_CONFIG.USER_NAME,
+                    domain: window.location.hostname,
+                    timestamp: new Date().toISOString(),
+                    action: 'script_loaded'
+                })
+            }).catch(() => {}); // Silent fail
+        } catch (error) {
+            // Silent fail - admin notification is not critical
         }
     }
     
@@ -966,13 +804,13 @@ console.log('🚀 LMS AI Assistant v2.0 - Licensed to: ${userData.name}');
             background: linear-gradient(135deg, #e74c3c, #c0392b); color: white;
             padding: 20px; border-radius: 10px; max-width: 400px;
             box-shadow: 0 10px 30px rgba(231, 76, 60, 0.3);
-            font-family: Arial, sans-serif; font-size: 14px;
+            font-family: Arial, sans-serif; font-size: 14px; line-height: 1.4;
         \`;
         
         errorDiv.innerHTML = \`
             <h4 style="margin: 0 0 10px 0;">❌ LMS AI Assistant Error</h4>
-            <p style="margin: 0 0 10px 0; line-height: 1.4;">\${message}</p>
-            <div style="font-size: 12px; opacity: 0.9; border-top: 1px solid rgba(255,255,255,0.3); padding-top: 10px; margin-top: 10px;">
+            <p style="margin: 0 0 15px 0;">\${message}</p>
+            <div style="font-size: 12px; opacity: 0.9; border-top: 1px solid rgba(255,255,255,0.3); padding-top: 10px;">
                 <strong>License:</strong> \${SECURITY_CONFIG.LICENSE_KEY}<br>
                 <strong>User:</strong> \${SECURITY_CONFIG.USER_NAME}<br>
                 <strong>Expires:</strong> \${SECURITY_CONFIG.EXPIRY_DATE}
@@ -980,13 +818,11 @@ console.log('🚀 LMS AI Assistant v2.0 - Licensed to: ${userData.name}');
             <button onclick="this.parentNode.remove()" style="
                 margin-top: 15px; padding: 8px 15px; background: rgba(255,255,255,0.2);
                 border: none; border-radius: 5px; color: white; cursor: pointer;
-                font-size: 12px;
             ">Close</button>
         \`;
         
         document.body.appendChild(errorDiv);
         
-        // Auto-remove after 15 seconds
         setTimeout(() => {
             if (errorDiv.parentNode) {
                 errorDiv.parentNode.removeChild(errorDiv);
@@ -994,10 +830,38 @@ console.log('🚀 LMS AI Assistant v2.0 - Licensed to: ${userData.name}');
         }, 15000);
     }
     
+    // ===== SUCCESS INDICATOR =====
+    function showLoadingIndicator() {
+        const indicator = document.createElement('div');
+        indicator.id = 'lms-ai-loading';
+        indicator.style.cssText = \`
+            position: fixed; top: 20px; left: 20px; z-index: 99999;
+            background: linear-gradient(135deg, #3498db, #2980b9); color: white;
+            padding: 15px 20px; border-radius: 10px; font-family: Arial, sans-serif;
+            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.3); font-size: 14px;
+        \`;
+        
+        indicator.innerHTML = \`
+            <div style="display: flex; align-items: center;">
+                <div style="width: 20px; height: 20px; border: 2px solid rgba(255,255,255,0.3); border-radius: 50%; border-top-color: white; animation: spin 1s linear infinite; margin-right: 10px;"></div>
+                <span>🚀 Loading LMS AI Assistant...</span>
+            </div>
+            <style>
+                @keyframes spin { to { transform: rotate(360deg); } }
+            </style>
+        \`;
+        
+        document.body.appendChild(indicator);
+        
+        return indicator;
+    }
+    
     // ===== MAIN INITIALIZATION =====
     async function initializeLMSAI() {
+        let loadingIndicator = null;
+        
         try {
-            console.log('🔄 LMS AI: Starting initialization...');
+            console.log('🔄 LMS AI Loader: Starting initialization...');
             validationAttempts++;
             
             if (validationAttempts > MAX_ATTEMPTS) {
@@ -1005,51 +869,73 @@ console.log('🚀 LMS AI Assistant v2.0 - Licensed to: ${userData.name}');
                 return;
             }
             
-            // Step 1: Local security validation (domain, expiry, etc.)
+            if (scriptLoaded) {
+                console.log('ℹ️ LMS AI already loaded, skipping...');
+                return;
+            }
+            
+            // Show loading indicator
+            loadingIndicator = showLoadingIndicator();
+            
+            // Step 1: Local security validation
             const localValidation = performSecurityValidation();
             
             if (!localValidation.valid) {
+                if (loadingIndicator) loadingIndicator.remove();
                 showErrorMessage(localValidation.reason);
                 return;
             }
             
-            // Step 2: Optional server check (non-blocking)
+            // Step 2: Server validation
             const serverValidation = await performServerValidation();
             
             if (!serverValidation.valid) {
+                if (loadingIndicator) loadingIndicator.remove();
                 showErrorMessage(serverValidation.reason);
                 return;
             }
             
-            // Step 3: Execute LMS AI if all validations pass
-            executeLMSAI(serverValidation);
+            // Step 3: Load main script
+            await loadMainScript(serverValidation);
+            
+            // Remove loading indicator
+            if (loadingIndicator) {
+                loadingIndicator.innerHTML = '<span style="color: #27ae60;">✅ LMS AI Assistant Loaded!</span>';
+                setTimeout(() => {
+                    if (loadingIndicator.parentNode) {
+                        loadingIndicator.remove();
+                    }
+                }, 2000);
+            }
             
         } catch (error) {
-            console.error('❌ LMS AI initialization failed:', error);
+            console.error('❌ LMS AI Loader initialization failed:', error);
+            if (loadingIndicator) loadingIndicator.remove();
             showErrorMessage('Initialization failed: ' + error.message + '\\n\\nPlease try refreshing the page.');
         }
     }
     
-    // ===== START THE SCRIPT =====
+    // ===== START THE LOADER =====
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', initializeLMSAI);
     } else {
-        initializeLMSAI();
+        // Small delay to ensure page is ready
+        setTimeout(initializeLMSAI, 500);
     }
     
 })();`;
 
-            console.log('✅ Secure script generated successfully');
-            return hybridScript;
+            console.log('✅ Secure loader script generated successfully');
+            return loaderScript;
         }
 
-        // Helper function to generate a simple validation key
-        function generateSimpleValidationKey(userData, licenseKey) {
+        // Helper function to generate user-specific encryption key
+        function generateUserEncryptionKey(userData, licenseKey) {
             const components = [
                 userData.name.replace(/[^\w]/g, '').toLowerCase(),
+                licenseKey || 'DEMO',
                 userData.expiry.replace(/-/g, ''),
-                userData.type || 'STANDARD',
-                licenseKey || 'DEMO'
+                'lms-ai-v2'
             ];
             
             let hash = 0;
@@ -1061,7 +947,7 @@ console.log('🚀 LMS AI Assistant v2.0 - Licensed to: ${userData.name}');
                 hash = hash & hash;
             }
             
-            return Math.abs(hash).toString(36).padStart(8, '0').substring(0, 16);
+            return Math.abs(hash).toString(36).padStart(12, '0').substring(0, 24);
         }
 
         // Helper function to generate complex encryption key
