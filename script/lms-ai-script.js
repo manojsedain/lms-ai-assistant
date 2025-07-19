@@ -1,7 +1,79 @@
 /*
  * LMS AI Assistant Pro - Main Script v2.0.0
  */
+// ===== GREASEMONKEY COMPATIBILITY LAYER =====
+// Add this at the very top of your lms-ai-script.js file
 
+if (typeof GM_getValue === 'undefined') {
+    console.log('🔧 LMS AI: Setting up Greasemonkey compatibility layer...');
+    
+    // Greasemonkey function replacements
+    window.GM_getValue = function(key, defaultValue) {
+        try {
+            const value = localStorage.getItem('gm_' + key);
+            return value !== null ? JSON.parse(value) : defaultValue;
+        } catch (e) {
+            return defaultValue;
+        }
+    };
+    
+    window.GM_setValue = function(key, value) {
+        try {
+            localStorage.setItem('gm_' + key, JSON.stringify(value));
+        } catch (e) {
+            console.warn('Failed to save GM value:', key);
+        }
+    };
+    
+    window.GM_deleteValue = function(key) {
+        try {
+            localStorage.removeItem('gm_' + key);
+        } catch (e) {
+            console.warn('Failed to delete GM value:', key);
+        }
+    };
+    
+    window.GM_listValues = function() {
+        try {
+            const keys = [];
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key && key.startsWith('gm_')) {
+                    keys.push(key.substring(3));
+                }
+            }
+            return keys;
+        } catch (e) {
+            return [];
+        }
+    };
+    
+    window.GM_xmlhttpRequest = function(details) {
+        // Use regular fetch as fallback
+        return fetch(details.url, {
+            method: details.method || 'GET',
+            headers: details.headers || {},
+            body: details.data
+        }).then(response => {
+            if (details.onload) {
+                details.onload({
+                    status: response.status,
+                    statusText: response.statusText,
+                    responseText: response.text(),
+                    response: response
+                });
+            }
+        }).catch(error => {
+            if (details.onerror) {
+                details.onerror(error);
+            }
+        });
+    };
+    
+    console.log('✅ LMS AI: Greasemonkey compatibility layer ready');
+}
+
+// ===== YOUR EXISTING SCRIPT CONTINUES HERE =====
 (function() {
     'use strict';
     
