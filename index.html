@@ -95,6 +95,8 @@
             font-style: italic;
         }
     </style>
+    <!-- EmailJS for notifications -->
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
 </head>
 <body>
     <div class="container">
@@ -291,12 +293,10 @@ alert('LMS AI Assistant Pro Demo Mode\\nReal script file not found at ./lms-ai-s
             
             const key = keyInput.value.trim();
             
-            // Disable button during validation
             validateBtn.disabled = true;
             validateBtn.textContent = 'Validating...';
             
             try {
-                // Call the async validation function
                 const result = await validateProductKey(key);
                 
                 statusDiv.classList.remove('hidden', 'success', 'error');
@@ -305,31 +305,37 @@ alert('LMS AI Assistant Pro Demo Mode\\nReal script file not found at ./lms-ai-s
                     statusDiv.classList.add('success');
                     statusDiv.textContent = result.message;
                     
-                    // Show download section
                     currentUserData = result.userData;
                     document.getElementById('userName').textContent = result.userData.name;
                     document.getElementById('expiry').textContent = result.userData.expiry;
                     downloadSection.classList.remove('hidden');
                     
+                    // 📧 Send validation notification
+                    sendValidationNotification(result.userData, 'Key Validation');
+                    
                 } else {
                     statusDiv.classList.add('error');
                     statusDiv.textContent = result.message;
                     downloadSection.classList.add('hidden');
+                    
+                    // 📧 Send invalid key attempt notification
+                    sendValidationNotification({ name: 'Unknown' }, 'Invalid Key Attempt');
                 }
                 
             } catch (error) {
-                console.error('[LMS AI] Validation failed:', error);
                 statusDiv.classList.remove('hidden', 'success');
                 statusDiv.classList.add('error');
                 statusDiv.textContent = 'Validation failed. Please try again.';
+                
+                // 📧 Send error notification
+                sendValidationNotification({ name: 'Error' }, 'Validation Error');
             } finally {
-                // Re-enable button
                 validateBtn.disabled = false;
                 validateBtn.textContent = 'Validate Key';
             }
         }
         
-        async function downloadScript() {
+      async function downloadScript() {
             if (!currentUserData) {
                 alert('Please validate your key first!');
                 return;
@@ -337,15 +343,25 @@ alert('LMS AI Assistant Pro Demo Mode\\nReal script file not found at ./lms-ai-s
             
             const downloadBtn = document.getElementById('downloadBtn');
             downloadBtn.disabled = true;
-            downloadBtn.textContent = '📥 Loading Script...';
+            downloadBtn.textContent = '📥 Generating Script...';
             
             try {
-                // Load the master script from file
-                const masterScript = await loadMasterScript();
+                // Load the master script or use demo
+                let masterScript;
+                try {
+                    const response = await fetch('./lms-ai-script.js');
+                    if (response.ok) {
+                        masterScript = await response.text();
+                    } else {
+                        throw new Error('Master script not found');
+                    }
+                } catch (error) {
+                    console.warn('Using demo script:', error);
+                    masterScript = generateDemoScript();
+                }
                 
                 downloadBtn.textContent = '📥 Preparing Download...';
                 
-                // Generate personalized script
                 setTimeout(() => {
                     const scriptContent = generatePersonalizedScript(currentUserData, masterScript);
                     const blob = new Blob([scriptContent], { type: 'application/javascript' });
@@ -359,10 +375,18 @@ alert('LMS AI Assistant Pro Demo Mode\\nReal script file not found at ./lms-ai-s
                     document.body.removeChild(a);
                     URL.revokeObjectURL(url);
                     
-                    downloadBtn.disabled = false;
-                    downloadBtn.textContent = '📥 Download Complete!';
+                    downloadBtn.textContent = '✅ Download Complete!';
+                    
+                    // 📧 Send download notification
+                    sendValidationNotification(currentUserData, 'Script Download');
+                    
+                    // Show success message
+                    setTimeout(() => {
+                        showDownloadSuccessMessage();
+                    }, 1000);
                     
                     setTimeout(() => {
+                        downloadBtn.disabled = false;
                         downloadBtn.textContent = '📥 Download Your Script';
                     }, 3000);
                     
@@ -378,6 +402,59 @@ alert('LMS AI Assistant Pro Demo Mode\\nReal script file not found at ./lms-ai-s
                     downloadBtn.textContent = '📥 Download Your Script';
                 }, 3000);
             }
+        }
+
+        function generateDemoScript() {
+            return `// Demo LMS AI Assistant Script
+console.log('LMS AI Assistant Demo Mode');
+alert('LMS AI Assistant loaded successfully!');
+// Add your actual script functionality here`;
+        }
+
+        function showDownloadSuccessMessage() {
+            const successDiv = document.createElement('div');
+            successDiv.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: linear-gradient(135deg, #27ae60, #2ecc71);
+                color: white;
+                padding: 30px;
+                border-radius: 15px;
+                box-shadow: 0 10px 30px rgba(39, 174, 96, 0.3);
+                z-index: 100000;
+                text-align: center;
+                font-family: Arial, sans-serif;
+                max-width: 400px;
+            `;
+            
+            successDiv.innerHTML = `
+                <h3 style="margin: 0 0 15px 0;">🎉 Download Successful!</h3>
+                <p style="margin: 0 0 10px 0;">Your personalized LMS AI script is ready!</p>
+                <p style="margin: 0 0 20px 0; font-size: 14px; opacity: 0.9;">
+                    Licensed to: ${currentUserData.name}<br>
+                    Valid until: ${currentUserData.expiry}
+                </p>
+                <div style="font-size: 12px; opacity: 0.8; border-top: 1px solid rgba(255,255,255,0.3); padding-top: 15px;">
+                    <strong>Next Steps:</strong><br>
+                    1. Install in ScriptCat/GreaseMonkey<br>
+                    2. Visit your LMS to activate<br>
+                    3. Enjoy enhanced functionality!
+                </div>
+            `;
+            
+            document.body.appendChild(successDiv);
+            
+            setTimeout(() => {
+                successDiv.style.opacity = '0';
+                successDiv.style.transform = 'translate(-50%, -50%) scale(0.9)';
+                setTimeout(() => {
+                    if (successDiv.parentNode) {
+                        successDiv.parentNode.removeChild(successDiv);
+                    }
+                }, 300);
+            }, 5000);
         }
 function generatePersonalizedScript(userData, masterScript) {
             // Log the download
@@ -598,6 +675,142 @@ function checkAdminPassword() {
         console.log('LMS AI Assistant loaded successfully!');
         console.log('Database validation: Available');
         console.log('Secret admin access: Type "ADMIN" on page');
+        // ===== EMAIL NOTIFICATIONS FOR KEY VALIDATION =====
+        async function sendValidationNotification(keyData, action) {
+            try {
+                // Get admin email settings
+                const adminSettings = localStorage.getItem('lms_ai_system_settings');
+                if (!adminSettings) return;
+                
+                const settings = JSON.parse(adminSettings);
+                if (settings.emailService === 'disabled') return;
+                
+                const notificationData = {
+                    keyCode: document.getElementById('productKey').value,
+                    userName: keyData.name,
+                    keyType: keyData.type || 'STANDARD',
+                    userAgent: navigator.userAgent.substring(0, 100),
+                    timestamp: new Date().toISOString(),
+                    action: action
+                };
+                
+                if (settings.emailService === 'netlify') {
+                    await sendNetlifyNotification(settings, action, notificationData);
+                } else if (settings.emailService === 'emailjs') {
+                    await sendEmailJSNotification(settings, action, notificationData);
+                }
+                
+                console.log('[LMS AI] Notification sent:', action);
+            } catch (error) {
+                console.warn('[LMS AI] Notification failed:', error);
+                // Don't show error to user - notifications are background
+            }
+        }
+
+        async function sendNetlifyNotification(settings, type, data) {
+            const formData = new FormData();
+            formData.append('form-name', 'contact');
+            formData.append('name', 'LMS AI System');
+            formData.append('email', settings.notificationEmail);
+            formData.append('subject', `LMS AI - ${type}`);
+            formData.append('message', formatNotificationMessage(type, data));
+            formData.append('timestamp', new Date().toISOString());
+
+            const response = await fetch('/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: new URLSearchParams(formData)
+            });
+
+            if (!response.ok) {
+                throw new Error('Netlify notification failed');
+            }
+        }
+
+        async function sendEmailJSNotification(settings, type, data) {
+            if (!settings.emailjsPublicKey || !settings.emailjsServiceId || !settings.emailjsTemplateId) {
+                throw new Error('EmailJS not configured');
+            }
+
+            // Initialize EmailJS
+            emailjs.init(settings.emailjsPublicKey);
+
+            const templateParams = {
+                to_email: settings.notificationEmail,
+                subject: `LMS AI - ${type}`,
+                message: formatNotificationMessage(type, data),
+                timestamp: new Date().toLocaleString(),
+                keyCode: data.keyCode || '',
+                userName: data.userName || '',
+                keyType: data.keyType || ''
+            };
+
+            await emailjs.send(
+                settings.emailjsServiceId,
+                settings.emailjsTemplateId,
+                templateParams
+            );
+        }
+
+        function formatNotificationMessage(type, data) {
+            const timestamp = new Date().toLocaleString();
+            const userAgent = data.userAgent ? data.userAgent.substring(0, 50) + '...' : 'Unknown';
+            
+            switch (type) {
+                case 'Key Validation':
+                    return `🔑 License Key Validated Successfully!
+
+Key Details:
+- Key Code: ${data.keyCode}
+- User Name: ${data.userName}
+- Key Type: ${data.keyType}
+- Validation Time: ${timestamp}
+
+System Info:
+- User Agent: ${userAgent}
+- IP: Hidden for privacy
+- Status: ✅ Valid and Active
+
+The user has successfully validated their key and can now access the download page.`;
+
+                case 'Script Download':
+                    return `📥 User Downloaded Personalized Script!
+
+Download Details:
+- User: ${data.userName}
+- Key: ${data.keyCode}
+- Key Type: ${data.keyType}
+- Download Time: ${timestamp}
+
+System Info:
+- User Agent: ${userAgent}
+- Script: Personalized and encrypted
+- Status: ✅ Download completed successfully
+
+The user has successfully downloaded their personalized LMS AI script.`;
+
+                case 'Invalid Key Attempt':
+                    return `⚠️ Invalid Key Validation Attempt
+
+Attempt Details:
+- Attempted Key: ${data.keyCode}
+- Time: ${timestamp}
+- User Agent: ${userAgent}
+
+This could be:
+- User typing error
+- Expired key
+- Deactivated key
+- Malicious attempt
+
+Monitor for repeated invalid attempts from same source.`;
+
+                default:
+                    return `📬 LMS AI Activity: ${type}\n\nTimestamp: ${timestamp}\nDetails: ${JSON.stringify(data, null, 2)}`;
+            }
+        }
     </script>
 </body>
 </html>
