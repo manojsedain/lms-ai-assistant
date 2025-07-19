@@ -3414,31 +3414,35 @@ function showAdminPanel() {
             }
         }
 
-        // Data Loading Functions
-        async function loadDashboardData() {
-            try {
-                showLoading('Loading dashboard data...');
-                
-                const response = await fetch('/.netlify/functions/get-dashboard-data', {
-                    headers: {
-                        'Authorization': 'Bearer ' + getAuthToken()
-                    }
-                });
-                
-                const data = await response.json();
-                
-                if (data.success) {
-                    updateDashboardStats(data.stats);
-                    updateRecentActivity(data.activity);
-                    updateSystemStatus(data.system);
-                }
-            } catch (error) {
-                console.error('Error loading dashboard:', error);
-                showToast('Failed to load dashboard data', 'error');
-            } finally {
-                hideLoading();
+     async function loadDashboardData() {
+    try {
+        showLoading('Loading dashboard data...');
+        
+        const response = await fetch('/.netlify/functions/get-dashboard-data', {
+            headers: {
+                'Authorization': 'Bearer test-token'
             }
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            // Update stats with real data
+            updateDashboardStats(data.stats);
+            updateRecentActivity(data.activity);
+            updateSystemStatus(data.system);
+            
+            showToast('Dashboard data loaded successfully!', 'success');
+        } else {
+            showToast('Failed to load dashboard data', 'error');
         }
+    } catch (error) {
+        console.error('Error loading dashboard:', error);
+        showToast('Failed to load dashboard data', 'error');
+    } finally {
+        hideLoading();
+    }
+}
 
         async function loadPendingRequests() {
             try {
