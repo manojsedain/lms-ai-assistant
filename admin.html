@@ -450,6 +450,10 @@
                     <div style="margin-top: 15px;">
                         <button onclick="saveEmailSettings()" class="btn-success">💾 Save Email Settings</button>
                         <button onclick="sendTestEmail()" class="btn-secondary">📧 Test Email</button>
+                        <div style="margin-top: 15px;">
+                        <button onclick="saveEmailSettings()" class="btn-success">💾 Save Email Settings</button>
+                        <button onclick="quickEmailTest()" class="btn-secondary">📧 Quick Test</button>
+                    </div>
                     </div>
                 
                 <div>
@@ -878,6 +882,33 @@ Happy licensing! 🚀</textarea>
             }
         }
 // ===== ALIAS FOR COMPATIBILITY =====
+    function quickEmailTest() {
+            const email = document.getElementById('notificationEmail').value.trim();
+            
+            if (!email) {
+                alert('❌ Please enter notification email first');
+                return;
+            }
+            
+            if (systemSettings.emailService === 'disabled') {
+                alert('❌ Please configure email service first');
+                return;
+            }
+            
+            const originalEmail = systemSettings.notificationEmail;
+            systemSettings.notificationEmail = email;
+            
+            sendEmailNotification('Test Email', {
+                message: 'Quick test successful! Your email notifications are working.',
+                subject: 'LMS AI Quick Test'
+            }).then(() => {
+                alert('✅ Test email sent to: ' + email);
+            }).catch(error => {
+                alert('❌ Test failed: ' + error.message);
+            }).finally(() => {
+                systemSettings.notificationEmail = originalEmail;
+            });
+        }
         function testEmailNotification() {
             sendTestEmail();
         }
