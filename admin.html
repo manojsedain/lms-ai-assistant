@@ -586,9 +586,8 @@
         </div>
     </div>
 
-    <script>
+  <script>
         // ===== CONFIGURATION =====
-        const ADMIN_PASSWORD = 'admin2025';
         const API_BASE = '/.netlify/functions';
         
         // ===== GLOBAL VARIABLES =====
@@ -596,9 +595,51 @@
         let currentGeneratedKey = null;
         let activityLog = [];
         let isDatabaseConnected = false;
+        let bulkGeneratedKeys = [];
+
+        // ===== SYSTEM SETTINGS =====
+        let systemSettings = {
+            adminPassword: 'admin2025',
+            notificationEmail: '',
+            emailService: 'disabled',
+            paypalClientId: '',
+            paypalEnvironment: 'sandbox',
+            keyPrice: 29.99,
+            emailjsPublicKey: '',
+            emailjsServiceId: '',
+            emailjsTemplateId: ''
+        };
+
+        function loadSystemSettings() {
+            const stored = localStorage.getItem('lms_ai_system_settings');
+            if (stored) {
+                try {
+                    systemSettings = { ...systemSettings, ...JSON.parse(stored) };
+                } catch (e) {
+                    console.warn('Could not load system settings');
+                }
+            }
+            
+            // Update UI
+            if (document.getElementById('notificationEmail')) {
+                document.getElementById('notificationEmail').value = systemSettings.notificationEmail;
+                document.getElementById('emailService').value = systemSettings.emailService;
+                document.getElementById('paypalClientId').value = systemSettings.paypalClientId;
+                document.getElementById('paypalEnvironment').value = systemSettings.paypalEnvironment;
+                document.getElementById('keyPrice').value = systemSettings.keyPrice;
+                document.getElementById('emailjsPublicKey').value = systemSettings.emailjsPublicKey;
+                document.getElementById('emailjsServiceId').value = systemSettings.emailjsServiceId;
+                document.getElementById('emailjsTemplateId').value = systemSettings.emailjsTemplateId;
+                
+                toggleEmailFields();
+            }
+        }
+
+        function saveSystemSettings() {
+            localStorage.setItem('lms_ai_system_settings', JSON.stringify(systemSettings));
+        }
 
         // ===== LOGIN SYSTEM =====
-// ===== LOGIN SYSTEM (UPDATED) =====
         function attemptLogin() {
             const password = document.getElementById('loginPassword').value;
             const errorDiv = document.getElementById('errorMessage');
@@ -635,6 +676,15 @@
                 logActivity('admin_login_failed', 'Failed login attempt');
             }
         }
+        
+        function logout() {
+            if (confirm('🚪 Are you sure you want to logout?')) {
+                document.getElementById('loginContainer').style.display = 'block';
+                document.getElementById('adminContainer').style.display = 'none';
+                document.getElementById('loginPassword').value = '';
+                logActivity('admin_logout', 'Administrator logged out');
+            }
+        }
 
         function changeAdminPassword() {
             const newPassword = document.getElementById('newAdminPassword').value.trim();
@@ -654,72 +704,12 @@
                 saveSystemSettings();
                 
                 // Also update the main site password
-                updateMainSitePassword(newPassword);
+                localStorage.setItem('lms_ai_admin_password', newPassword);
                 
                 alert('✅ Admin password updated successfully!\n\nNew password: ' + newPassword + '\n\nThis works for both admin panel and main site secret access.');
                 document.getElementById('newAdminPassword').value = '';
                 
                 logActivity('admin_password_changed', 'Admin password updated');
-            }
-        }
-
-        function updateMainSitePassword(newPassword) {
-            // Store in a way that main site can access
-            localStorage.setItem('lms_ai_admin_password', newPassword);
-        }
-
-        function getCurrentAdminPassword() {
-            // First check system settings
-            if (systemSettings.adminPassword && systemSettings.adminPassword !== 'admin2025') {
-                return systemSettings.adminPassword;
-            }
-            
-            // Then check dedicated storage
-            const stored = localStorage.getItem('lms_ai_admin_password');
-            if (stored) {
-                return stored;
-            }
-            
-            // Fallback to default
-            return 'admin2025';
-        }
-        
-        function logout() {
-            if (confirm('🚪 Are you sure you want to logout?')) {
-                document.getElementById('loginContainer').style.display = 'block';
-                document.getElementById('adminContainer').style.display = 'none';
-                document.getElementById('loginPassword').value = '';
-                logActivity('admin_logout', 'Administrator logged out');
-            }
-        }
-
-        // ===== DATABASE CONNECTION =====
-        async function testDatabaseConnection() {
-            const statusText = document.getElementById('dbStatusText');
-            const spinner = document.getElementById('dbSpinner');
-            
-            statusText.textContent = 'Testing connection...';
-            spinner.style.display = 'inline-block';
-            
-            try {
-                const response = await fetch(`${API_BASE}/list-keys?admin=${ADMIN_PASSWORD}`);
-                
-                if (response.ok) {
-                    const data = await response.json();
-                    isDatabaseConnected = true;
-                    statusText.textContent = `✅ Connected - ${data.keys ? data.keys.length : 0} keys in database`;
-                    statusText.style.color = '#27ae60';
-                    logActivity('database_test', 'Database connection successful');
-                } else {
-                    throw new Error(`HTTP ${response.status}`);
-                }
-            } catch (error) {
-                isDatabaseConnected = false;
-                statusText.textContent = `❌ Connection failed - Using local storage`;
-                statusText.style.color = '#e74c3c';
-                logActivity('database_test_failed', `Database connection failed: ${error.message}`);
-            } finally {
-                spinner.style.display = 'none';
             }
         }
 
@@ -733,60 +723,68 @@
                 id: Date.now()
             };
             
-            activityLog.unshift(logEntry); // Add to beginning
+            activityLog.unshift(logEntry);
             
-            // Keep only last 100 entries
             if (activityLog.length > 100) {
                 activityLog = activityLog.slice(0, 100);
             }
             
-            // Store in localStorage
             localStorage.setItem('lms_ai_activity_log', JSON.stringify(activityLog));
-            
             console.log(`[${timestamp}] ${type}: ${message}`);
         }
 
-        function refreshActivityLog() {
-            const stored = localStorage.getItem('lms_ai_activity_log');
-            if (stored) {
-                activityLog = JSON.parse(stored);
-            }
+        // ===== EMAIL FUNCTIONS =====
+        function toggleEmailFields() {
+            const service = document.getElementById('emailService').value;
+            const fields = document.getElementById('emailjsFields');
             
-            filterActivityLog();
+            if (fields) {
+                if (service === 'emailjs') {
+                    fields.classList.remove('hidden');
+                } else {
+                    fields.classList.add('hidden');
+                }
+            }
         }
 
-        function filterActivityLog() {
-            const filter = document.getElementById('logFilter').value;
-            const logDiv = document.getElementById('activityLog');
+        function saveEmailSettings() {
+            systemSettings.notificationEmail = document.getElementById('notificationEmail').value.trim();
+            systemSettings.emailService = document.getElementById('emailService').value;
+            systemSettings.emailjsPublicKey = document.getElementById('emailjsPublicKey').value.trim();
+            systemSettings.emailjsServiceId = document.getElementById('emailjsServiceId').value.trim();
+            systemSettings.emailjsTemplateId = document.getElementById('emailjsTemplateId').value.trim();
             
-            let filteredLog = activityLog;
-            if (filter !== 'all') {
-                filteredLog = activityLog.filter(entry => entry.type.includes(filter));
-            }
+            saveSystemSettings();
+            alert('✅ Email settings saved successfully!');
             
-            if (filteredLog.length === 0) {
-                logDiv.innerHTML = '<div style="text-align: center; color: #7f8c8d; padding: 20px;"><p>📊 No activities found for this filter.</p></div>';
+            logActivity('email_settings_updated', `Email service: ${systemSettings.emailService}`);
+        }
+
+        function savePayPalSettings() {
+            systemSettings.paypalClientId = document.getElementById('paypalClientId').value.trim();
+            systemSettings.paypalEnvironment = document.getElementById('paypalEnvironment').value;
+            
+            saveSystemSettings();
+            alert('✅ PayPal settings saved successfully!');
+            
+            logActivity('paypal_settings_updated', `Environment: ${systemSettings.paypalEnvironment}`);
+        }
+
+        function savePricingSettings() {
+            const price = parseFloat(document.getElementById('keyPrice').value);
+            if (isNaN(price) || price < 0) {
+                alert('❌ Please enter a valid price');
                 return;
             }
             
-            logDiv.innerHTML = filteredLog.map(entry => `
-                <div class="key-item" style="font-size: 12px;">
-                    <strong>${entry.type.toUpperCase()}</strong><br>
-                    <small>${new Date(entry.timestamp).toLocaleString()}</small><br>
-                    ${entry.message}
-                </div>
-            `).join('');
+            systemSettings.keyPrice = price;
+            saveSystemSettings();
+            alert(`✅ Pricing updated: $${price.toFixed(2)} per key`);
+            
+            logActivity('pricing_updated', `Key price set to $${price.toFixed(2)}`);
         }
 
-        function clearActivityLog() {
-            if (confirm('🗑️ Are you sure you want to clear the activity log?')) {
-                activityLog = [];
-                localStorage.removeItem('lms_ai_activity_log');
-                refreshActivityLog();
-                logActivity('log_cleared', 'Activity log cleared by administrator');
-            }
-        }
-// ===== KEY GENERATION =====
+        // ===== KEY GENERATION =====
         function generateNewKey() {
             const userName = document.getElementById('userName').value.trim();
             const duration = parseInt(document.getElementById('keyDuration').value);
@@ -798,24 +796,21 @@
                 return;
             }
 
-            // Generate key components
             const namePrefix = userName.toUpperCase().replace(/[^A-Z]/g, '').substring(0, 4).padEnd(4, 'X');
             const year = new Date().getFullYear();
             const random = Math.random().toString(36).substring(2, 8).toUpperCase();
             
             const keyCode = `${namePrefix}-${year}-${random}`;
             
-            // Calculate expiry date
             let expiryDate;
             if (duration === 0) {
-                expiryDate = "2099-12-31"; // Permanent
+                expiryDate = "2099-12-31";
             } else {
                 const expiry = new Date();
                 expiry.setMonth(expiry.getMonth() + duration);
                 expiryDate = expiry.toISOString().split('T')[0];
             }
 
-            // Generate encryption key
             const encryptionKey = `${userName.toLowerCase().replace(/\s+/g, '-')}-secret-key-${year}`;
 
             currentGeneratedKey = {
@@ -830,7 +825,6 @@
                 downloadCount: 0
             };
 
-            // Display generated key
             document.getElementById('newKeyCode').textContent = keyCode;
             document.getElementById('newKeyName').textContent = userName;
             document.getElementById('newKeyExpiry').textContent = expiryDate;
@@ -839,13 +833,12 @@
             document.getElementById('generatedKeyDisplay').classList.remove('hidden');
             document.getElementById('saveSuccess').classList.add('hidden');
             
-            // Enable save button
             document.getElementById('saveBtn').disabled = false;
             
             logActivity('key_generated', `Generated key ${keyCode} for ${userName}`);
         }
 
-async function saveKeyToDatabase() {
+        async function saveKeyToDatabase() {
             if (!currentGeneratedKey) {
                 alert('❌ Please generate a key first!');
                 return;
@@ -857,7 +850,6 @@ async function saveKeyToDatabase() {
             saveBtn.textContent = '💾 Saving...';
 
             try {
-                // Always save to localStorage for immediate use
                 const localKeys = JSON.parse(localStorage.getItem('lms_ai_local_keys') || '{}');
                 localKeys[currentGeneratedKey.keyCode] = {
                     name: currentGeneratedKey.userName,
@@ -870,10 +862,8 @@ async function saveKeyToDatabase() {
                 };
                 localStorage.setItem('lms_ai_local_keys', JSON.stringify(localKeys));
                 
-                // Also add to current database
                 keysDatabase[currentGeneratedKey.keyCode] = localKeys[currentGeneratedKey.keyCode];
                 
-                // Try database save (but don't fail if it doesn't work)
                 try {
                     const response = await fetch(`${API_BASE}/create-key`, {
                         method: 'POST',
@@ -884,7 +874,7 @@ async function saveKeyToDatabase() {
                             expiryDate: currentGeneratedKey.expiryDate,
                             encryptionKey: currentGeneratedKey.encryptionKey,
                             keyType: currentGeneratedKey.keyType,
-                            adminPassword: ADMIN_PASSWORD
+                            adminPassword: systemSettings.adminPassword
                         })
                     });
 
@@ -912,7 +902,8 @@ async function saveKeyToDatabase() {
                 updateStatistics();
             }
         }
-       function clearKeyForm() {
+
+        function clearKeyForm() {
             document.getElementById('userName').value = '';
             document.getElementById('userEmail').value = '';
             document.getElementById('keyDuration').value = '12';
@@ -928,7 +919,6 @@ async function saveKeyToDatabase() {
                 navigator.clipboard.writeText(currentGeneratedKey.keyCode).then(() => {
                     alert('📋 Key copied to clipboard!');
                 }).catch(() => {
-                    // Fallback for older browsers
                     const textArea = document.createElement('textarea');
                     textArea.value = currentGeneratedKey.keyCode;
                     document.body.appendChild(textArea);
@@ -941,52 +931,11 @@ async function saveKeyToDatabase() {
         }
 
         // ===== KEY MANAGEMENT =====
-        async function loadFromDatabase() {
-            try {
-                const response = await fetch(`${API_BASE}/list-keys?admin=${ADMIN_PASSWORD}`);
-                
-                if (response.ok) {
-                    const result = await response.json();
-                    if (result.success && result.keys) {
-                        keysDatabase = {};
-                        result.keys.forEach(key => {
-                            keysDatabase[key.key_code] = {
-                                name: key.user_name,
-                                expiry: key.expiry_date.split('T')[0],
-                                active: key.active,
-                                encryptionKey: key.encryption_key || 'legacy-key',
-                                type: key.key_type || 'STANDARD',
-                                created: key.created_at ? key.created_at.split('T')[0] : 'Unknown',
-                                last_used: key.last_used,
-                                download_count: key.download_count || 0
-                            };
-                        });
-                        
-                        logActivity('keys_loaded_db', `Loaded ${result.keys.length} keys from database`);
-                        refreshKeyList();
-                        updateStatistics();
-                        return;
-                    }
-                }
-                throw new Error('Database load failed');
-                
-            } catch (error) {
-                console.warn('Database load failed, using localStorage:', error);
-                loadFromLocalStorage();
-            }
-        }
-
-        function loadFromLocalStorage() {
-            const localKeys = JSON.parse(localStorage.getItem('lms_ai_local_keys') || '{}');
-            keysDatabase = { ...localKeys };
-            logActivity('keys_loaded_local', `Loaded ${Object.keys(keysDatabase).length} keys from localStorage`);
-            refreshKeyList();
-            updateStatistics();
-        }
-
         function refreshKeyList() {
             const keyListDiv = document.getElementById('keyList');
-            const keyCount = Object.keys(keysDatabase).length;
+            const localKeys = JSON.parse(localStorage.getItem('lms_ai_local_keys') || '{}');
+            const allKeys = { ...localKeys, ...keysDatabase };
+            const keyCount = Object.keys(allKeys).length;
             
             document.getElementById('keyCount').textContent = `${keyCount} keys loaded`;
 
@@ -994,17 +943,16 @@ async function saveKeyToDatabase() {
                 keyListDiv.innerHTML = `
                     <div style="text-align: center; color: #7f8c8d; padding: 40px;">
                         <h4>📭 No keys found</h4>
-                        <p>Generate some keys to get started, or load from database.</p>
-                        <button onclick="loadFromDatabase()" class="btn-success">☁️ Try Loading from Database</button>
+                        <p>Generate some keys to get started.</p>
                     </div>
                 `;
                 return;
             }
 
-            const sortedKeys = Object.entries(keysDatabase).sort((a, b) => {
+            const sortedKeys = Object.entries(allKeys).sort((a, b) => {
                 const dateA = new Date(a[1].created || '2025-01-01');
                 const dateB = new Date(b[1].created || '2025-01-01');
-                return dateB - dateA; // Newest first
+                return dateB - dateA;
             });
 
             keyListDiv.innerHTML = sortedKeys.map(([keyCode, keyData]) => {
@@ -1054,90 +1002,47 @@ async function saveKeyToDatabase() {
             }).join('');
         }
 
-        async function toggleKeyStatus(keyCode) {
-            const keyData = keysDatabase[keyCode];
-            if (!keyData) return;
-            
-            const newStatus = !keyData.active;
-            
-            try {
-                // Try to update in database first
-                const response = await fetch(`${API_BASE}/update-key`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        keyCode: keyCode,
-                        active: newStatus,
-                        adminPassword: ADMIN_PASSWORD
-                    })
-                });
-                
-                if (!response.ok) {
-                    throw new Error('Database update failed');
-                }
-            } catch (error) {
-                console.warn('Database update failed, updating locally only');
-            }
-            
-            // Update locally
-            keyData.active = newStatus;
-            
-            // Update localStorage
+        function toggleKeyStatus(keyCode) {
             const localKeys = JSON.parse(localStorage.getItem('lms_ai_local_keys') || '{}');
             if (localKeys[keyCode]) {
-                localKeys[keyCode].active = newStatus;
+                localKeys[keyCode].active = !localKeys[keyCode].active;
                 localStorage.setItem('lms_ai_local_keys', JSON.stringify(localKeys));
+                
+                if (keysDatabase[keyCode]) {
+                    keysDatabase[keyCode].active = localKeys[keyCode].active;
+                }
+                
+                refreshKeyList();
+                updateStatistics();
+                
+                const status = localKeys[keyCode].active ? 'activated' : 'deactivated';
+                alert(`✅ Key ${keyCode} has been ${status}`);
+                logActivity('key_status_changed', `Key ${keyCode} ${status}`);
             }
-            
-            const status = newStatus ? 'activated' : 'deactivated';
-            logActivity('key_status_changed', `Key ${keyCode} ${status}`);
-            
-            refreshKeyList();
-            updateStatistics();
-            alert(`✅ Key ${keyCode} has been ${status}`);
         }
 
-        async function deleteKey(keyCode) {
-            if (!confirm(`⚠️ Are you sure you want to delete key ${keyCode}?\n\nThis action cannot be undone and will immediately invalidate the key.`)) {
+        function deleteKey(keyCode) {
+            if (!confirm(`⚠️ Are you sure you want to delete key ${keyCode}?\n\nThis action cannot be undone.`)) {
                 return;
             }
 
-            try {
-                // Try to delete from database first
-                const response = await fetch(`${API_BASE}/delete-key`, {
-                    method: 'DELETE',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        keyCode: keyCode,
-                        adminPassword: ADMIN_PASSWORD
-                    })
-                });
-                
-                if (!response.ok) {
-                    throw new Error('Database delete failed');
-                }
-            } catch (error) {
-                console.warn('Database delete failed, deleting locally only');
-            }
-            
-            // Delete locally
-            delete keysDatabase[keyCode];
-            
-            // Delete from localStorage
             const localKeys = JSON.parse(localStorage.getItem('lms_ai_local_keys') || '{}');
             delete localKeys[keyCode];
             localStorage.setItem('lms_ai_local_keys', JSON.stringify(localKeys));
             
-            logActivity('key_deleted', `Key ${keyCode} deleted permanently`);
+            delete keysDatabase[keyCode];
             
             refreshKeyList();
             updateStatistics();
             alert(`✅ Key ${keyCode} has been deleted permanently`);
+            logActivity('key_deleted', `Key ${keyCode} deleted permanently`);
         }
 
         // ===== STATISTICS =====
         function updateStatistics() {
-            const keys = Object.values(keysDatabase);
+            const localKeys = JSON.parse(localStorage.getItem('lms_ai_local_keys') || '{}');
+            const allKeys = { ...keysDatabase, ...localKeys };
+            const keys = Object.values(allKeys);
             const now = new Date();
             
             const totalKeys = keys.length;
@@ -1151,111 +1056,53 @@ async function saveKeyToDatabase() {
             document.getElementById('totalDownloads').textContent = totalDownloads;
         }
 
-        // ===== IMPORT/EXPORT =====
-        function exportDatabase() {
-            const exportData = {
-                keys: keysDatabase,
-                exported_at: new Date().toISOString(),
-                version: "1.0",
-                total_keys: Object.keys(keysDatabase).length
-            };
-            
-            const jsonString = JSON.stringify(exportData, null, 2);
-            document.getElementById('exportData').value = jsonString;
-            showImportSection();
-            
-            logActivity('database_exported', `Exported ${Object.keys(keysDatabase).length} keys`);
-        }
-
-        function showImportSection() {
-            document.getElementById('importSection').classList.remove('hidden');
-            if (!document.getElementById('exportData').value) {
-                exportDatabase();
+        // ===== ACTIVITY LOG =====
+        function refreshActivityLog() {
+            const stored = localStorage.getItem('lms_ai_activity_log');
+            if (stored) {
+                activityLog = JSON.parse(stored);
             }
+            filterActivityLog();
         }
 
-        function hideImportSection() {
-            document.getElementById('importSection').classList.add('hidden');
-        }
-
-        function copyToClipboard() {
-            const exportData = document.getElementById('exportData');
-            exportData.select();
-            navigator.clipboard.writeText(exportData.value).then(() => {
-                alert('✅ Database JSON copied to clipboard!\n\nYou can save this as a backup file.');
-            }).catch(() => {
-                document.execCommand('copy');
-                alert('✅ Database JSON copied to clipboard!');
-            });
-        }
-
-        function downloadDatabase() {
-            const content = document.getElementById('exportData').value;
-            const blob = new Blob([content], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `lms-ai-database-backup-${new Date().toISOString().split('T')[0]}.json`;
-            a.click();
-            URL.revokeObjectURL(url);
+        function filterActivityLog() {
+            const filter = document.getElementById('logFilter').value;
+            const logDiv = document.getElementById('activityLog');
             
-            alert('✅ Database backup downloaded!\n\nKeep this file safe for restore purposes.');
-            logActivity('database_downloaded', 'Database backup file downloaded');
-        }
-
-        function restoreFromJson() {
-            const jsonContent = document.getElementById('exportData').value.trim();
+            let filteredLog = activityLog;
+            if (filter !== 'all') {
+                filteredLog = activityLog.filter(entry => entry.type.includes(filter));
+            }
             
-            if (!jsonContent) {
-                alert('❌ Please paste JSON content first!');
+            if (filteredLog.length === 0) {
+                logDiv.innerHTML = '<div style="text-align: center; color: #7f8c8d; padding: 20px;"><p>📊 No activities found.</p></div>';
                 return;
             }
             
-            if (!confirm('⚠️ This will overwrite your current database!\n\nAre you sure you want to restore from this backup?')) {
-                return;
-            }
-            
-            try {
-                const data = JSON.parse(jsonContent);
-                
-                if (data.keys && typeof data.keys === 'object') {
-                    keysDatabase = data.keys;
-                    localStorage.setItem('lms_ai_local_keys', JSON.stringify(data.keys));
-                    
-                    refreshKeyList();
-                    updateStatistics();
-                    
-                    alert(`✅ Database restored successfully!\n\nRestored ${Object.keys(data.keys).length} keys.`);
-                    logActivity('database_restored', `Restored ${Object.keys(data.keys).length} keys from backup`);
-                    
-                    hideImportSection();
-                } else {
-                    throw new Error('Invalid backup format');
-                }
-                
-            } catch (error) {
-                alert(`❌ Restore failed!\n\nError: ${error.message}\n\nPlease check the JSON format.`);
-                logActivity('database_restore_failed', `Restore failed: ${error.message}`);
+            logDiv.innerHTML = filteredLog.map(entry => `
+                <div class="key-item" style="font-size: 12px;">
+                    <strong>${entry.type.toUpperCase()}</strong><br>
+                    <small>${new Date(entry.timestamp).toLocaleString()}</small><br>
+                    ${entry.message}
+                </div>
+            `).join('');
+        }
+
+        function clearActivityLog() {
+            if (confirm('🗑️ Are you sure you want to clear the activity log?')) {
+                activityLog = [];
+                localStorage.removeItem('lms_ai_activity_log');
+                refreshActivityLog();
+                logActivity('log_cleared', 'Activity log cleared by administrator');
             }
         }
 
         // ===== INITIALIZATION =====
         function initializeAdmin() {
-            // Test database connection
-            testDatabaseConnection();
-            
-            // Load activity log
+            loadSystemSettings();
             refreshActivityLog();
-            
-            // Try to load keys from database, fallback to localStorage
-            loadFromDatabase();
-            
-            // Set up auto-refresh every 5 minutes
-            setInterval(() => {
-                if (isDatabaseConnected) {
-                    loadFromDatabase();
-                }
-            }, 5 * 60 * 1000);
+            refreshKeyList();
+            updateStatistics();
             
             console.log('Admin panel initialized successfully');
             logActivity('admin_initialized', 'Admin panel loaded and initialized');
@@ -1263,431 +1110,14 @@ async function saveKeyToDatabase() {
 
         // ===== EVENT LISTENERS =====
         document.addEventListener('DOMContentLoaded', function() {
-            // Allow Enter key on login
             document.getElementById('loginPassword').addEventListener('keypress', function(e) {
                 if (e.key === 'Enter') {
                     attemptLogin();
                 }
             });
-            
-            // Allow Enter key on user name field to generate key
-            document.addEventListener('keypress', function(e) {
-                if (e.key === 'Enter' && e.target.id === 'userName') {
-                    generateNewKey();
-                }
-            });
         });
 
-        // ===== UTILITY FUNCTIONS =====
-        function formatDate(dateString) {
-            return new Date(dateString).toLocaleDateString();
-        }
-
-        function formatTimestamp(timestamp) {
-            return new Date(timestamp).toLocaleString();
-        }
-// ===== ADMIN SETTINGS =====
-        let systemSettings = {
-            adminPassword: 'admin2025',
-            notificationEmail: '',
-            emailService: 'disabled',
-            paypalClientId: '',
-            paypalEnvironment: 'sandbox',
-            keyPrice: 29.99
-        };
-
-        let bulkGeneratedKeys = [];
-
-        function loadSystemSettings() {
-            const stored = localStorage.getItem('lms_ai_system_settings');
-            if (stored) {
-                systemSettings = { ...systemSettings, ...JSON.parse(stored) };
-            }
-            
-            // Update UI
-            document.getElementById('notificationEmail').value = systemSettings.notificationEmail;
-            document.getElementById('emailService').value = systemSettings.emailService;
-            document.getElementById('paypalClientId').value = systemSettings.paypalClientId;
-            document.getElementById('paypalEnvironment').value = systemSettings.paypalEnvironment;
-            document.getElementById('keyPrice').value = systemSettings.keyPrice;
-        }
-
-        function saveSystemSettings() {
-            localStorage.setItem('lms_ai_system_settings', JSON.stringify(systemSettings));
-        }
-
-        function changeAdminPassword() {
-            const newPassword = document.getElementById('newAdminPassword').value.trim();
-            
-            if (!newPassword) {
-                alert('❌ Please enter a new password');
-                return;
-            }
-            
-            if (newPassword.length < 6) {
-                alert('❌ Password must be at least 6 characters');
-                return;
-            }
-            
-            if (confirm(`🔑 Change admin password to: ${newPassword}?\n\nMake sure you remember this password!`)) {
-                systemSettings.adminPassword = newPassword;
-                saveSystemSettings();
-                
-                alert('✅ Admin password updated successfully!\n\nNew password: ' + newPassword);
-                document.getElementById('newAdminPassword').value = '';
-                
-                logActivity('admin_password_changed', 'Admin password updated');
-            }
-        }
-
-        function saveEmailSettings() {
-            systemSettings.notificationEmail = document.getElementById('notificationEmail').value.trim();
-            systemSettings.emailService = document.getElementById('emailService').value;
-            
-            saveSystemSettings();
-            alert('✅ Email settings saved successfully!');
-            
-            logActivity('email_settings_updated', `Email service: ${systemSettings.emailService}`);
-        }
-
-        function savePayPalSettings() {
-            systemSettings.paypalClientId = document.getElementById('paypalClientId').value.trim();
-            systemSettings.paypalEnvironment = document.getElementById('paypalEnvironment').value;
-            
-            saveSystemSettings();
-            alert('✅ PayPal settings saved successfully!');
-            
-            logActivity('paypal_settings_updated', `Environment: ${systemSettings.paypalEnvironment}`);
-        }
-
-        function savePricingSettings() {
-            const price = parseFloat(document.getElementById('keyPrice').value);
-            if (isNaN(price) || price < 0) {
-                alert('❌ Please enter a valid price');
-                return;
-            }
-            
-            systemSettings.keyPrice = price;
-            saveSystemSettings();
-            alert(`✅ Pricing updated: $${price.toFixed(2)} per key`);
-            
-            logActivity('pricing_updated', `Key price set to $${price.toFixed(2)}`);
-        }
-        // ===== EMAIL NOTIFICATIONS =====
-        function initializeEmailJS() {
-            if (systemSettings.emailService === 'emailjs' && systemSettings.emailjsPublicKey) {
-                emailjs.init(systemSettings.emailjsPublicKey);
-            }
-        }
-
-        async function sendEmailNotification(type, data) {
-            if (systemSettings.emailService !== 'emailjs' || !systemSettings.notificationEmail) {
-                return; // Email disabled
-            }
-
-            try {
-                const templateParams = {
-                    to_email: systemSettings.notificationEmail,
-                    subject: `LMS AI - ${type}`,
-                    message: formatEmailMessage(type, data),
-                    timestamp: new Date().toLocaleString()
-                };
-
-                await emailjs.send(
-                    systemSettings.emailjsServiceId,
-                    systemSettings.emailjsTemplateId,
-                    templateParams
-                );
-
-                console.log('Email notification sent:', type);
-            } catch (error) {
-                console.error('Email send failed:', error);
-            }
-        }
-
-        function formatEmailMessage(type, data) {
-            switch (type) {
-                case 'Key Validation':
-                    return `Key ${data.keyCode} was validated by ${data.userName} at ${new Date().toLocaleString()}`;
-                case 'Key Generated':
-                    return `New key ${data.keyCode} generated for ${data.userName}`;
-                case 'Bulk Keys Generated':
-                    return `${data.count} bulk keys generated with prefix ${data.prefix}`;
-                case 'Script Download':
-                    return `User ${data.userName} downloaded script using key ${data.keyCode}`;
-                default:
-                    return `LMS AI Activity: ${type}`;
-            }
-        }
-        function toggleEmailFields() {
-            const service = document.getElementById('emailService').value;
-            const fields = document.getElementById('emailjsFields');
-            
-            if (service === 'emailjs') {
-                fields.classList.remove('hidden');
-            } else {
-                fields.classList.add('hidden');
-            }
-        }
-
-        // Update email settings form
-        function saveEmailSettings() {
-            <h4 style="margin-top: 20px;">📧 Email Settings</h4>
-                    <div class="form-group">
-                        <label for="notificationEmail">Notification Email:</label>
-                        <input type="email" id="notificationEmail" placeholder="admin@yoursite.com">
-                    </div>
-                    <div class="form-group">
-                        <label for="emailService">Email Service:</label>
-                        <select id="emailService" onchange="toggleEmailFields()">
-                            <option value="disabled">Disabled</option>
-                            <option value="emailjs">EmailJS (Free)</option>
-                        </select>
-                    </div>
-                    <div id="emailjsFields" class="hidden">
-                        <div class="form-group">
-                            <label for="emailjsPublicKey">EmailJS Public Key:</label>
-                            <input type="text" id="emailjsPublicKey" placeholder="Your EmailJS public key">
-                        </div>
-                        <div class="form-group">
-                            <label for="emailjsServiceId">EmailJS Service ID:</label>
-                            <input type="text" id="emailjsServiceId" placeholder="service_xxxxxxx">
-                        </div>
-                        <div class="form-group">
-                            <label for="emailjsTemplateId">EmailJS Template ID:</label>
-                            <input type="text" id="emailjsTemplateId" placeholder="template_xxxxxxx">
-                        </div>
-                        <p style="font-size: 12px; color: #666;">
-                            📝 <a href="https://emailjs.com" target="_blank">Get free EmailJS account</a> for email notifications
-                        </p>
-                    </div>
-                    <button onclick="saveEmailSettings()" class="btn-success">💾 Save Email Settings</button>
-            
-            systemSettings.notificationEmail = document.getElementById('notificationEmail').value.trim();
-            systemSettings.emailService = document.getElementById('emailService').value;
-            systemSettings.emailjsPublicKey = document.getElementById('emailjsPublicKey').value.trim();
-            systemSettings.emailjsServiceId = document.getElementById('emailjsServiceId').value.trim();
-            systemSettings.emailjsTemplateId = document.getElementById('emailjsTemplateId').value.trim();
-            
-            saveSystemSettings();
-            initializeEmailJS();
-            alert('✅ Email settings saved successfully!');
-            
-            logActivity('email_settings_updated', `Email service: ${systemSettings.emailService}`);
-        }
-
-        // ===== BULK KEY GENERATION =====
-        function generateBulkKeys() {
-            const count = parseInt(document.getElementById('bulkCount').value);
-            const prefix = document.getElementById('bulkPrefix').value.trim();
-            const duration = parseInt(document.getElementById('bulkDuration').value);
-            const keyType = document.getElementById('bulkType').value;
-            const startNumber = parseInt(document.getElementById('bulkStartNumber').value);
-            const padding = parseInt(document.getElementById('bulkPadding').value);
-            
-            if (!count || count < 1 || count > 1000) {
-                alert('❌ Please enter a valid number of keys (1-1000)');
-                return;
-            }
-            
-            if (!prefix) {
-                alert('❌ Please enter a name prefix');
-                return;
-            }
-            
-            if (confirm(`📦 Generate ${count} keys?\n\nPrefix: ${prefix}\nType: ${keyType}\nThis will take a moment...`)) {
-                bulkGeneratedKeys = [];
-                const bulkList = document.getElementById('bulkKeysList');
-                bulkList.innerHTML = '<div style="text-align: center; padding: 20px;">⏳ Generating keys...</div>';
-                bulkList.classList.remove('hidden');
-                
-                setTimeout(() => {
-                    for (let i = 0; i < count; i++) {
-                        const number = startNumber + i;
-                        const paddedNumber = number.toString().padStart(padding, '0');
-                        const userName = `${prefix}${paddedNumber}`;
-                        
-                        // Generate key
-                        const namePrefix = userName.toUpperCase().replace(/[^A-Z]/g, '').substring(0, 4).padEnd(4, 'X');
-                        const year = new Date().getFullYear();
-                        const random = Math.random().toString(36).substring(2, 8).toUpperCase();
-                        const keyCode = `${namePrefix}-${year}-${random}`;
-                        
-                        // Calculate expiry
-                        let expiryDate;
-                        if (duration === 0) {
-                            expiryDate = "2099-12-31";
-                        } else {
-                            const expiry = new Date();
-                            expiry.setMonth(expiry.getMonth() + duration);
-                            expiryDate = expiry.toISOString().split('T')[0];
-                        }
-                        
-                        const encryptionKey = `${userName.toLowerCase().replace(/\s+/g, '-')}-secret-key-${year}`;
-                        
-                        const keyData = {
-                            keyCode: keyCode,
-                            userName: userName,
-                            expiryDate: expiryDate,
-                            encryptionKey: encryptionKey,
-                            keyType: keyType,
-                            createdAt: new Date().toISOString(),
-                            active: true,
-                            bulk: true
-                        };
-                        
-                        bulkGeneratedKeys.push(keyData);
-                        
-                        // Also add to main database
-                        keysDatabase[keyCode] = {
-                            name: userName,
-                            expiry: expiryDate,
-                            active: true,
-                            encryptionKey: encryptionKey,
-                            type: keyType,
-                            created: new Date().toISOString().split('T')[0],
-                            download_count: 0,
-                            bulk: true
-                        };
-                    }
-                    
-                    // Save to localStorage
-                    const localKeys = JSON.parse(localStorage.getItem('lms_ai_local_keys') || '{}');
-                    bulkGeneratedKeys.forEach(key => {
-                        localKeys[key.keyCode] = {
-                            name: key.userName,
-                            expiry: key.expiryDate,
-                            active: key.active,
-                            encryptionKey: key.encryptionKey,
-                            type: key.keyType,
-                            created: key.createdAt.split('T')[0],
-                            download_count: 0,
-                            bulk: true
-                        };
-                    });
-                    localStorage.setItem('lms_ai_local_keys', JSON.stringify(localKeys));
-                    
-                    displayBulkKeys();
-                    document.getElementById('exportBulkBtn').disabled = false;
-                    
-                    refreshKeyList();
-                    updateStatistics();
-                    
-                    alert(`✅ Generated ${count} bulk keys successfully!`);
-                    logActivity('bulk_keys_generated', `Generated ${count} ${keyType} keys with prefix ${prefix}`);
-                    
-                }, 500);
-            }
-        }
-
-        function displayBulkKeys() {
-            const bulkList = document.getElementById('bulkKeysList');
-            
-            if (bulkGeneratedKeys.length === 0) {
-                bulkList.classList.add('hidden');
-                return;
-            }
-            
-            bulkList.innerHTML = `
-                <div style="text-align: center; margin-bottom: 15px;">
-                    <strong>📦 ${bulkGeneratedKeys.length} Bulk Keys Generated</strong>
-                </div>
-                ${bulkGeneratedKeys.map((key, index) => `
-                    <div class="key-item" style="font-size: 12px;">
-                        <strong>${key.userName}</strong><br>
-                        <small><strong>Key:</strong> <code>${key.keyCode}</code></small><br>
-                        <small><strong>Expires:</strong> ${key.expiryDate} | <strong>Type:</strong> ${key.keyType}</small>
-                    </div>
-                `).join('')}
-            `;
-            
-            bulkList.classList.remove('hidden');
-        }
-
-        function exportBulkKeys() {
-            if (bulkGeneratedKeys.length === 0) {
-                alert('❌ No bulk keys to export. Generate some keys first.');
-                return;
-            }
-            
-            // Create CSV content
-            const headers = ['Username', 'Key Code', 'Expiry Date', 'Key Type', 'Encryption Key', 'Created Date'];
-            const csvContent = [
-                headers.join(','),
-                ...bulkGeneratedKeys.map(key => [
-                    key.userName,
-                    key.keyCode,
-                    key.expiryDate,
-                    key.keyType,
-                    key.encryptionKey,
-                    key.createdAt.split('T')[0]
-                ].join(','))
-            ].join('\n');
-            
-            // Download CSV
-            const blob = new Blob([csvContent], { type: 'text/csv' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `bulk-keys-${new Date().toISOString().split('T')[0]}.csv`;
-            a.click();
-            URL.revokeObjectURL(url);
-            
-            alert(`✅ Exported ${bulkGeneratedKeys.length} keys to CSV file!`);
-            logActivity('bulk_keys_exported', `Exported ${bulkGeneratedKeys.length} keys to CSV`);
-        }
-
-        function clearBulkKeys() {
-            if (bulkGeneratedKeys.length === 0) {
-                alert('❌ No bulk keys to clear.');
-                return;
-            }
-            
-            if (confirm(`🗑️ Clear ${bulkGeneratedKeys.length} bulk keys?\n\nThis will only clear the bulk view, not delete the keys from database.`)) {
-                bulkGeneratedKeys = [];
-                document.getElementById('bulkKeysList').classList.add('hidden');
-                document.getElementById('exportBulkBtn').disabled = true;
-                
-                alert('✅ Bulk keys view cleared!');
-            }
-        }
-
-        // Update the attemptLogin function to use dynamic password
-        const originalAttemptLogin = attemptLogin;
-        attemptLogin = function() {
-            const password = document.getElementById('loginPassword').value;
-            const errorDiv = document.getElementById('errorMessage');
-            
-            if (password === systemSettings.adminPassword) {
-                document.getElementById('loginContainer').style.display = 'none';
-                document.getElementById('adminContainer').style.display = 'block';
-                initializeAdmin();
-                logActivity('admin_login', 'Administrator logged in');
-            } else {
-                errorDiv.textContent = '❌ Invalid password! Access denied.';
-                errorDiv.classList.remove('hidden');
-                document.getElementById('loginPassword').value = '';
-                document.getElementById('loginPassword').style.borderColor = '#e74c3c';
-                
-                setTimeout(() => {
-                    errorDiv.classList.add('hidden');
-                    document.getElementById('loginPassword').style.borderColor = '#bdc3c7';
-                }, 3000);
-                
-                logActivity('admin_login_failed', 'Failed login attempt');
-            }
-        };
-
-        // Update initialization
-        const originalInitializeAdmin = initializeAdmin;
-        initializeAdmin = function() {
-            loadSystemSettings();
-            originalInitializeAdmin();
-        };
-        // Initialize on load
         console.log('LMS AI Admin Panel loaded successfully!');
-        console.log('Database integration: Enabled');
-        console.log('Local storage fallback: Enabled');
     </script>
 </body>
 </html>
