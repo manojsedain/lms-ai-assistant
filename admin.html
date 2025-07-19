@@ -1350,62 +1350,116 @@ function savePayPalSettings() {
 
         // ===== KEY GENERATION =====
 function generateKey() {
-    // Generate LMS-AI format instead of TEST format
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    let keyCode = '';
-    for (let i = 0; i < 8; i++) {
-        keyCode += chars.charAt(Math.floor(Math.random() * chars.length));
+    const userName = document.getElementById('userName').value.trim();
+    const userEmail = document.getElementById('userEmail').value.trim();
+    const keyType = document.getElementById('keyType').value;
+    const duration = parseInt(document.getElementById('duration').value);
+    
+    if (!userName) {
+        showMessage('Please enter a user name', 'error');
+        return;
     }
-    return 'LMS-AI-2025-' + keyCode;
+    
+    if (!userEmail) {
+        showMessage('Please enter a user email', 'error');
+        return;
+    }
+    
+    // Generate key in LMS-AI format (more consistent)
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let randomPart = '';
+    for (let i = 0; i < 8; i++) {
+        randomPart += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    
+    const keyCode = 'LMS-AI-2025-' + randomPart;
+    
+    // Calculate expiry date
+    let expiryDate;
+    if (duration === 0) {
+        expiryDate = "2099-12-31";
+    } else {
+        const expiry = new Date();
+        expiry.setMonth(expiry.getMonth() + duration);
+        expiryDate = expiry.toISOString().split('T')[0];
+    }
+    
+    // Generate encryption key
+    const encryptionKey = `${userName.toLowerCase().replace(/\s+/g, '-')}-secret-key-2025`;
+    
+    // Store the generated key data
+    currentGeneratedKey = {
+        keyCode: keyCode,
+        userName: userName,
+        expiryDate: expiryDate,
+        encryptionKey: encryptionKey,
+        keyType: keyType,
+        userEmail: userEmail,
+        createdAt: new Date().toISOString(),
+        active: true,
+        downloadCount: 0
+    };
+    
+    // Update the UI
+    document.getElementById('newKeyCode').textContent = keyCode;
+    document.getElementById('newKeyName').textContent = userName;
+    document.getElementById('newKeyExpiry').textContent = expiryDate;
+    document.getElementById('newKeyType').textContent = keyType;
+    document.getElementById('newEncryptionKey').textContent = encryptionKey.substring(0, 30) + '...';
+    document.getElementById('generatedKeyDisplay').classList.remove('hidden');
+    document.getElementById('saveSuccess').classList.add('hidden');
+    
+    // Enable save button
+    document.getElementById('saveBtn').disabled = false;
+    
+    // Log the activity
+    logActivity('key_generated', `Generated key ${keyCode} for ${userName}`);
+    
+    // Send email notification
+    sendEmailNotification('Key Generated', {
+        keyCode: keyCode,
+        userName: userName,
+        keyType: keyType
+    });
+    
+    console.log('[ADMIN] Key generated successfully:', keyCode);
 }
-            const namePrefix = userName.toUpperCase().replace(/[^A-Z]/g, '').substring(0, 4).padEnd(4, 'X');
-            const year = new Date().getFullYear();
-            const random = Math.random().toString(36).substring(2, 8).toUpperCase();
-            
-            const keyCode = `${namePrefix}-${year}-${random}`;
-            
-            let expiryDate;
-            if (duration === 0) {
-                expiryDate = "2099-12-31";
-            } else {
-                const expiry = new Date();
-                expiry.setMonth(expiry.getMonth() + duration);
-                expiryDate = expiry.toISOString().split('T')[0];
-            }
-
-            const encryptionKey = `${userName.toLowerCase().replace(/\s+/g, '-')}-secret-key-${year}`;
-
-            currentGeneratedKey = {
-                keyCode: keyCode,
-                userName: userName,
-                expiryDate: expiryDate,
-                encryptionKey: encryptionKey,
-                keyType: keyType,
-                userEmail: userEmail,
-                createdAt: new Date().toISOString(),
-                active: true,
-                downloadCount: 0
-            };
-
-            document.getElementById('newKeyCode').textContent = keyCode;
-            document.getElementById('newKeyName').textContent = userName;
-            document.getElementById('newKeyExpiry').textContent = expiryDate;
-            document.getElementById('newKeyType').textContent = keyType;
-            document.getElementById('newEncryptionKey').textContent = encryptionKey.substring(0, 30) + '...';
-            document.getElementById('generatedKeyDisplay').classList.remove('hidden');
-            document.getElementById('saveSuccess').classList.add('hidden');
-            
-            document.getElementById('saveBtn').disabled = false;
-            
-            logActivity('key_generated', `Generated key ${keyCode} for ${userName}`);
-            
-            // Send email notification
-            sendEmailNotification('Key Generated', {
-                keyCode: keyCode,
-                userName: userName,
-                keyType: keyType
-            });
+    // ===== LOGIN FUNCTION =====
+async function attemptLogin() {
+    const password = document.getElementById('adminPassword').value.trim();
+    
+    if (!password) {
+        showMessage('Please enter a password', 'error');
+        return;
+    }
+    
+    // Check password (change 'admin123' to your preferred password)
+    const correctPassword = 'admin123';
+    
+    if (password === correctPassword) {
+        console.log('[ADMIN] Login successful');
+        
+        // Hide login section
+        document.getElementById('loginSection').style.display = 'none';
+        
+        // Show admin panel
+        document.getElementById('adminPanel').style.display = 'block';
+        
+        showMessage('Login successful! Welcome to LMS AI Admin Panel.', 'success');
+        
+        // Load existing keys if function exists
+        if (typeof loadSavedKeys === 'function') {
+            loadSavedKeys();
         }
+        
+    } else {
+        console.log('[ADMIN] Login failed - incorrect password');
+        showMessage('Incorrect password. Please try again.', 'error');
+        
+        // Clear password field
+        document.getElementById('adminPassword').value = '';
+    }
+}
 
         async function saveKeyToDatabase() {
             if (!currentGeneratedKey) {
