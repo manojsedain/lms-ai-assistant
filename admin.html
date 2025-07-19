@@ -562,7 +562,7 @@
             </div>
             
             <div style="margin-top: 20px;">
-                <button onclick="generateNewKey()" class="btn-success">🔑 Generate Key</button>
+               <button onclick="generateKey()">Generate Key</button>
                 <button onclick="saveKeyToDatabase()" id="saveBtn" class="btn-success" disabled>💾 Save to Database</button>
                 <button onclick="clearKeyForm()" class="btn-secondary">🗑️ Clear Form</button>
             </div>
@@ -2941,7 +2941,10 @@ async function attemptLogin() {
                 </div>
             `).join('');
         }
-
+// ===== WRAPPER FUNCTION FOR COMPATIBILITY =====
+function generateNewKey() {
+    generateKey();
+}
         function exportRenewalHistory() {
             if (renewalHistory.length === 0) {
                 alert('❌ No renewal history to export');
