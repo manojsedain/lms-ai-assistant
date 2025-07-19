@@ -2,7 +2,8 @@ exports.handler = async (event, context) => {
     const headers = {
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Headers': 'Content-Type',
-        'Access-Control-Allow-Methods': 'POST, OPTIONS'
+        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+        'Content-Type': 'application/json'
     };
 
     if (event.httpMethod === 'OPTIONS') {
@@ -13,129 +14,70 @@ exports.handler = async (event, context) => {
         return {
             statusCode: 405,
             headers,
-            body: JSON.stringify({ error: 'Method not allowed' })
+            body: JSON.stringify({ valid: false, message: 'Method not allowed' })
         };
     }
 
     try {
-        const { keyCode } = JSON.parse(event.body);
+        const { licenseKey } = JSON.parse(event.body);
         
-        if (!keyCode) {
+        if (!licenseKey) {
             return {
-                statusCode: 200,
+                statusCode: 400,
                 headers,
                 body: JSON.stringify({ 
                     valid: false, 
-                    message: 'Please enter a product key' 
+                    message: 'License key is required' 
                 })
             };
         }
 
-        console.log('Validating key:', keyCode);
-
-        // Check hardcoded keys first
-        const hardcodedKeys = {
-            'DEMO-2025-TEST': {
-                name: 'Demo User',
-                expiry: '2025-12-31',
-                encryptionKey: 'demo-secret-key-2025',
-                active: true
-            },
-            'ADMIN-2025-MASTER': {
-                name: 'Administrator',
-                expiry: '2099-12-31', 
-                encryptionKey: 'admin-master-key-2025',
-                active: true
-            },
-            'JOHN-2025-ABC123': {
-                name: 'John Smith',
-                expiry: '2025-12-31',
-                encryptionKey: 'john-secret-key-2025',
-                active: true
-            }
-        };
-
-        let keyData = hardcodedKeys[keyCode.toUpperCase()];
-
-        // If not found in hardcoded, check generated keys (simulated database)
-        if (!keyData) {
-            // For now, let's create some sample generated keys that might match what you created
-            const sampleGeneratedKeys = {
-                'TEST-2025-H03PFT': {
-                    name: 'Test User Generated',
-                    expiry: '2025-12-31',
-                    encryptionKey: 'test-user-secret-key-2025',
-                    active: true
-                }
-            };
-            
-            keyData = sampleGeneratedKeys[keyCode.toUpperCase()];
-        }
+        // TODO: Replace this with your actual database query
+        // For now, let's simulate database lookup
+        console.log('Looking up license key:', licenseKey);
         
-        if (!keyData) {
-            console.log('Key not found:', keyCode);
-            return {
-                statusCode: 200,
-                headers,
-                body: JSON.stringify({
-                    valid: false,
-                    message: 'Invalid product key. Please check your key and try again.'
-                })
-            };
-        }
-
-        // Check if key is active
-        if (!keyData.active) {
-            return {
-                statusCode: 200,
-                headers,
-                body: JSON.stringify({
-                    valid: false,
-                    message: 'This key has been deactivated. Please contact support.'
-                })
-            };
-        }
-
-        // Check expiry
-        const today = new Date();
-        const expiryDate = new Date(keyData.expiry);
+        // Example database query (replace with your actual database)
+        // const user = await db.collection('licenses').doc(licenseKey).get();
         
-        if (today > expiryDate) {
+        // For testing, let's use a simple pattern check
+        if (licenseKey.startsWith('LMS-AI-2025-')) {
+            // Simulate successful database lookup
+            const userData = {
+                name: 'Database User',
+                email: 'user@example.com',
+                expiry: '2025-12-31',
+                type: 'STANDARD',
+                active: true
+            };
+
+            return {
+                statusCode: 200,
+                headers,
+                body: JSON.stringify({
+                    valid: true,
+                    message: 'License key validated successfully',
+                    user: userData
+                })
+            };
+        } else {
             return {
                 statusCode: 200,
                 headers,
                 body: JSON.stringify({
                     valid: false,
-                    message: 'This key has expired. Please renew your license.'
+                    message: 'Invalid license key format'
                 })
             };
         }
-
-        console.log('Key validation successful:', keyCode);
-
-        return {
-            statusCode: 200,
-            headers,
-            body: JSON.stringify({
-                valid: true,
-                message: 'Valid key! Preparing your personalized script...',
-                userData: {
-                    name: keyData.name,
-                    expiry: keyData.expiry,
-                    encryptionKey: keyData.encryptionKey,
-                    type: keyData.type || 'STANDARD'
-                }
-            })
-        };
 
     } catch (error) {
-        console.error('Database error:', error);
+        console.error('Validation error:', error);
         return {
             statusCode: 500,
             headers,
             body: JSON.stringify({
                 valid: false,
-                message: 'Server error. Please try again later.'
+                message: 'Internal server error during validation'
             })
         };
     }
