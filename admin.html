@@ -3211,13 +3211,19 @@
         let deferredPrompt = null;
 
         // Initialize Application
-        document.addEventListener('DOMContentLoaded', function() {
-            initializeTheme();
-            setupEventListeners();
-            checkAuthentication();
-            setupPWA();
-        });
+document.addEventListener('DOMContentLoaded', function() {
+    initializeTheme();
+    setupEventListeners();
+    // Skip auth check for now - go directly to admin panel
+    showAdminPanel();
+    setupPWA();
+});
 
+function showAdminPanel() {
+    document.getElementById('loginContainer').style.display = 'none';
+    document.getElementById('adminLayout').classList.add('active');
+    initializeAdminPanel();
+}
         // Theme Management
         function initializeTheme() {
             document.documentElement.setAttribute('data-theme', currentTheme);
