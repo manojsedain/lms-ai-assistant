@@ -134,6 +134,52 @@
     </div>
 
     <script>
+        // ===== SAFE ENCODING FUNCTIONS =====
+        function safeBase64Encode(str) {
+            try {
+                // First try native btoa
+                return btoa(str);
+            } catch (error) {
+                // Fallback for Unicode characters
+                return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g,
+                    function toSolidBytes(match, p1) {
+                        return String.fromCharCode('0x' + p1);
+                    }
+                ));
+            }
+        }
+        
+        function safeBase64Decode(str) {
+            try {
+                return atob(str);
+            } catch (error) {
+                try {
+                    return decodeURIComponent(atob(str).split('').map(function(c) {
+                        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+                    }).join(''));
+                } catch (e) {
+                    return str; // Return original if all else fails
+                }
+            }
+        }
+        
+        function generateSafeKey(components) {
+            // Create a safe key without Unicode issues
+            const cleanComponents = components.map(comp => 
+                comp.replace(/[^\w\-\.]/g, '').toLowerCase()
+            );
+            
+            let hash = 0;
+            const keyString = cleanComponents.join('-');
+            
+            for (let i = 0; i < keyString.length; i++) {
+                const char = keyString.charCodeAt(i);
+                hash = ((hash << 5) - hash) + char;
+                hash = hash & hash; // Convert to 32-bit integer
+            }
+            
+            return Math.abs(hash).toString(36).padStart(8, '0').substring(0, 32);
+        }
         // ===== ENCRYPTION FUNCTIONS =====
         function simpleEncrypt(text, key) {
             try {
