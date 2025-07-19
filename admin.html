@@ -444,7 +444,7 @@
                         </p>
                     </div>
                     <button onclick="saveEmailSettings()" class="btn-success">💾 Save Email Settings</button>
-                    <button onclick="testEmailNotification()" class="btn-secondary">📧 Test Email</button>
+                    <button onclick="sendTestEmail()" class="btn-secondary">📧 Test Email</button>
                 </div>
                 
                 <div>
@@ -850,7 +850,10 @@
                 logActivity('email_failed', `Failed to send ${type}: ${error.message}`);
             }
         }
-
+// ===== ALIAS FOR COMPATIBILITY =====
+        function testEmailNotification() {
+            sendTestEmail();
+        }
         async function sendNetlifyFormEmail(type, data) {
             const formData = new FormData();
             formData.append('form-name', 'contact');
