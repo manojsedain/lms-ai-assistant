@@ -676,14 +676,30 @@ function checkAdminPassword() {
         console.log('Database validation: Available');
         console.log('Secret admin access: Type "ADMIN" on page');
         // ===== EMAIL NOTIFICATIONS FOR KEY VALIDATION =====
+       // ===== EMAIL NOTIFICATIONS FOR KEY VALIDATION (DEBUG VERSION) =====
         async function sendValidationNotification(keyData, action) {
             try {
+                console.log('[EMAIL DEBUG] Starting notification process...');
+                console.log('[EMAIL DEBUG] Action:', action);
+                console.log('[EMAIL DEBUG] Key data:', keyData);
+                
                 // Get admin email settings
                 const adminSettings = localStorage.getItem('lms_ai_system_settings');
-                if (!adminSettings) return;
+                console.log('[EMAIL DEBUG] Admin settings found:', !!adminSettings);
+                
+                if (!adminSettings) {
+                    console.log('[EMAIL DEBUG] No admin settings found');
+                    return;
+                }
                 
                 const settings = JSON.parse(adminSettings);
-                if (settings.emailService === 'disabled') return;
+                console.log('[EMAIL DEBUG] Email service:', settings.emailService);
+                console.log('[EMAIL DEBUG] Notification email:', settings.notificationEmail);
+                
+                if (settings.emailService === 'disabled') {
+                    console.log('[EMAIL DEBUG] Email service is disabled');
+                    return;
+                }
                 
                 const notificationData = {
                     keyCode: document.getElementById('productKey').value,
@@ -694,20 +710,27 @@ function checkAdminPassword() {
                     action: action
                 };
                 
+                console.log('[EMAIL DEBUG] Notification data:', notificationData);
+                
                 if (settings.emailService === 'netlify') {
+                    console.log('[EMAIL DEBUG] Using Netlify notifications');
                     await sendNetlifyNotification(settings, action, notificationData);
                 } else if (settings.emailService === 'emailjs') {
+                    console.log('[EMAIL DEBUG] Using EmailJS notifications');
                     await sendEmailJSNotification(settings, action, notificationData);
                 }
                 
-                console.log('[LMS AI] Notification sent:', action);
+                console.log('[EMAIL DEBUG] Notification sent successfully:', action);
             } catch (error) {
-                console.warn('[LMS AI] Notification failed:', error);
+                console.error('[EMAIL DEBUG] Notification failed:', error);
+                console.error('[EMAIL DEBUG] Error details:', error.message);
                 // Don't show error to user - notifications are background
             }
         }
 
         async function sendNetlifyNotification(settings, type, data) {
+            console.log('[EMAIL DEBUG] Netlify notification starting...');
+            
             const formData = new FormData();
             formData.append('form-name', 'contact');
             formData.append('name', 'LMS AI System');
@@ -715,6 +738,9 @@ function checkAdminPassword() {
             formData.append('subject', `LMS AI - ${type}`);
             formData.append('message', formatNotificationMessage(type, data));
             formData.append('timestamp', new Date().toISOString());
+
+            console.log('[EMAIL DEBUG] Sending to:', settings.notificationEmail);
+            console.log('[EMAIL DEBUG] Subject:', `LMS AI - ${type}`);
 
             const response = await fetch('/', {
                 method: 'POST',
@@ -724,17 +750,33 @@ function checkAdminPassword() {
                 body: new URLSearchParams(formData)
             });
 
+            console.log('[EMAIL DEBUG] Netlify response status:', response.status);
+
             if (!response.ok) {
-                throw new Error('Netlify notification failed');
+                throw new Error(`Netlify notification failed: ${response.status}`);
             }
+            
+            console.log('[EMAIL DEBUG] Netlify notification sent successfully');
         }
 
         async function sendEmailJSNotification(settings, type, data) {
+            console.log('[EMAIL DEBUG] EmailJS notification starting...');
+            console.log('[EMAIL DEBUG] EmailJS settings check:');
+            console.log('  - Public Key:', !!settings.emailjsPublicKey);
+            console.log('  - Service ID:', !!settings.emailjsServiceId);
+            console.log('  - Template ID:', !!settings.emailjsTemplateId);
+            
             if (!settings.emailjsPublicKey || !settings.emailjsServiceId || !settings.emailjsTemplateId) {
-                throw new Error('EmailJS not configured');
+                throw new Error('EmailJS not configured properly');
+            }
+
+            // Check if EmailJS is available
+            if (typeof emailjs === 'undefined') {
+                throw new Error('EmailJS library not loaded');
             }
 
             // Initialize EmailJS
+            console.log('[EMAIL DEBUG] Initializing EmailJS...');
             emailjs.init(settings.emailjsPublicKey);
 
             const templateParams = {
@@ -747,16 +789,23 @@ function checkAdminPassword() {
                 keyType: data.keyType || ''
             };
 
-            await emailjs.send(
+            console.log('[EMAIL DEBUG] Template params:', templateParams);
+            console.log('[EMAIL DEBUG] Sending EmailJS...');
+
+            const result = await emailjs.send(
                 settings.emailjsServiceId,
                 settings.emailjsTemplateId,
                 templateParams
             );
+
+            console.log('[EMAIL DEBUG] EmailJS result:', result);
         }
 
         function formatNotificationMessage(type, data) {
             const timestamp = new Date().toLocaleString();
             const userAgent = data.userAgent ? data.userAgent.substring(0, 50) + '...' : 'Unknown';
+            
+            console.log('[EMAIL DEBUG] Formatting message for type:', type);
             
             switch (type) {
                 case 'Key Validation':
@@ -770,7 +819,6 @@ Key Details:
 
 System Info:
 - User Agent: ${userAgent}
-- IP: Hidden for privacy
 - Status: ✅ Valid and Active
 
 The user has successfully validated their key and can now access the download page.`;
