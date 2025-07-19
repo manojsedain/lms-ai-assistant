@@ -1795,7 +1795,9 @@
                         </button>
                     </div>
                 </div>
-
+<button class="btn btn-primary" onclick="testDashboardLoad()" style="margin: 1rem;">
+    🧪 Test Dashboard Load
+</button>
                 <!-- Statistics Grid -->
                 <div class="stats-grid">
                     <div class="stat-card hover-lift">
@@ -3222,7 +3224,14 @@ document.addEventListener('DOMContentLoaded', function() {
 function showAdminPanel() {
     document.getElementById('loginContainer').style.display = 'none';
     document.getElementById('adminLayout').classList.add('active');
-    initializeAdminPanel(); // This will load real data
+    
+    // Wait a moment for the DOM to be ready, then load data
+    setTimeout(() => {
+        console.log('🏁 Starting admin panel initialization...');
+        loadDashboardData();
+        loadPendingRequests();
+    }, 500);
+    
     showToast('Welcome to the admin panel!', 'success');
 }
         // Theme Management
@@ -4394,6 +4403,10 @@ function initializeAdminPanel() {
                 if (document.getElementById('newUserEmail')) document.getElementById('newUserEmail').value = '';
             }, 1500);
         }
+    function testDashboardLoad() {
+    console.log('🧪 Manual test button clicked');
+    loadDashboardData();
+}
     </script>
 </body>
 </html>
