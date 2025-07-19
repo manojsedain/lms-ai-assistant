@@ -413,7 +413,7 @@
                     </div>
                     <button onclick="changeAdminPassword()" class="btn-warning">🔑 Update Password</button>
                     
-                    <h4 style="margin-top: 20px;">📧 Email Settings</h4>
+<h4 style="margin-top: 20px;">📧 Email Settings</h4>
                     <div class="form-group">
                         <label for="notificationEmail">Notification Email:</label>
                         <input type="email" id="notificationEmail" placeholder="admin@yoursite.com">
@@ -430,22 +430,27 @@
                         <div class="form-group">
                             <label for="emailjsPublicKey">EmailJS Public Key:</label>
                             <input type="text" id="emailjsPublicKey" placeholder="Your EmailJS public key">
+                            <small style="color: #666; font-size: 12px;">Found in EmailJS Dashboard → Account → General</small>
                         </div>
                         <div class="form-group">
                             <label for="emailjsServiceId">EmailJS Service ID:</label>
                             <input type="text" id="emailjsServiceId" placeholder="service_xxxxxxx">
+                            <small style="color: #666; font-size: 12px;">Found in EmailJS Dashboard → Email Services</small>
                         </div>
                         <div class="form-group">
                             <label for="emailjsTemplateId">EmailJS Template ID:</label>
                             <input type="text" id="emailjsTemplateId" placeholder="template_xxxxxxx">
+                            <small style="color: #666; font-size: 12px;">Found in EmailJS Dashboard → Email Templates</small>
                         </div>
-                        <p style="font-size: 12px; color: #666;">
-                            📝 <a href="https://emailjs.com" target="_blank">Get free EmailJS account</a> for email notifications
+                        <p style="font-size: 12px; color: #666; background: #f8f9fa; padding: 10px; border-radius: 5px; border-left: 3px solid #3498db;">
+                            📝 <strong>Setup Guide:</strong> <a href="https://emailjs.com" target="_blank">Create free EmailJS account</a> → 
+                            Connect Gmail → Create template → Copy IDs above
                         </p>
                     </div>
-                    <button onclick="saveEmailSettings()" class="btn-success">💾 Save Email Settings</button>
-                    <button onclick="sendTestEmail()" class="btn-secondary">📧 Test Email</button>
-                </div>
+                    <div style="margin-top: 15px;">
+                        <button onclick="saveEmailSettings()" class="btn-success">💾 Save Email Settings</button>
+                        <button onclick="sendTestEmail()" class="btn-secondary">📧 Test Email</button>
+                    </div>
                 
                 <div>
                     <h4>💳 Payment Settings</h4>
@@ -608,6 +613,7 @@
             <h3>📊 Analytics & Testing</h3>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
                 <div>
+<div>
                     <h4>📧 Email Testing</h4>
                     <div class="form-group">
                         <label for="testEmailAddress">Test Email Address:</label>
@@ -619,11 +625,31 @@
                     </div>
                     <div class="form-group">
                         <label for="testEmailMessage">Test Message:</label>
-                        <textarea id="testEmailMessage" placeholder="Test message content" style="height: 100px;">This is a test email from your LMS AI Admin Panel.</textarea>
+                        <textarea id="testEmailMessage" placeholder="Test message content" style="height: 100px;">✅ EmailJS test successful!
+
+This is a test notification from your LMS AI Assistant admin panel.
+
+If you received this email, your notification system is working correctly!
+
+🎉 Your email notifications are now active and will send alerts for:
+- New key generations
+- Key validations
+- Admin logins
+- Bulk key operations
+
+Happy licensing! 🚀</textarea>
                     </div>
                     <button onclick="sendTestEmail()" class="btn-secondary">📧 Send Test Email</button>
+                    
+                    <div style="margin-top: 15px; padding: 10px; background: #e3f2fd; border-radius: 5px; border-left: 3px solid #2196F3;">
+                        <small>
+                            <strong>💡 Test Tips:</strong><br>
+                            • Make sure to save email settings first<br>
+                            • Check spam folder if email doesn't arrive<br>
+                            • Gmail may take 1-2 minutes to deliver
+                        </small>
+                    </div>
                 </div>
-                
                 <div>
                     <h4>📈 Quick Stats</h4>
                     <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 4px solid #3498db;">
@@ -909,39 +935,79 @@
             }
         }
 
-        async function sendTestEmail() {
+async function sendTestEmail() {
             const testEmail = document.getElementById('testEmailAddress').value.trim();
             const testSubject = document.getElementById('testEmailSubject').value.trim();
             const testMessage = document.getElementById('testEmailMessage').value.trim();
             
+            // Validation
             if (!testEmail) {
                 alert('❌ Please enter a test email address');
                 return;
             }
             
             if (systemSettings.emailService === 'disabled') {
-                alert('❌ Email service is disabled. Please configure email settings first.');
+                alert('❌ Email service is disabled.\n\nPlease:\n1. Choose EmailJS or Netlify Forms\n2. Configure settings\n3. Save settings\n4. Try test again');
                 return;
             }
             
+            if (systemSettings.emailService === 'emailjs') {
+                if (!systemSettings.emailjsPublicKey || !systemSettings.emailjsServiceId || !systemSettings.emailjsTemplateId) {
+                    alert('❌ EmailJS configuration incomplete.\n\nPlease fill in:\n• Public Key\n• Service ID\n• Template ID\n\nThen save settings and try again.');
+                    return;
+                }
+            }
+            
+            // Show loading state
+            const testBtn = event.target;
+            const originalText = testBtn.textContent;
+            testBtn.disabled = true;
+            testBtn.textContent = '📧 Sending...';
+            
             try {
+                console.log('Starting test email...');
+                
+                // Temporarily use test email
                 const originalEmail = systemSettings.notificationEmail;
                 systemSettings.notificationEmail = testEmail;
                 
                 await sendEmailNotification('Test Email', {
                     message: testMessage,
-                    subject: testSubject
+                    subject: testSubject,
+                    testEmail: testEmail
                 });
                 
+                // Restore original email
                 systemSettings.notificationEmail = originalEmail;
                 
-                alert('✅ Test email sent successfully!\nCheck your inbox.');
-                logActivity('test_email_sent', `Test email sent to ${testEmail}`);
+                alert('✅ Test email sent successfully!\n\n📧 Check your inbox: ' + testEmail + '\n\n💡 If you don\'t see it, check your spam folder.\n\nGmail may take 1-2 minutes to deliver.');
+                logActivity('test_email_sent', `Test email sent to ${testEmail} via ${systemSettings.emailService}`);
                 
             } catch (error) {
-                alert('❌ Failed to send test email:\n' + error.message);
+                console.error('Test email error:', error);
+                
+                let errorMessage = '❌ Failed to send test email:\n\n';
+                
+                if (error.message.includes('EmailJS')) {
+                    errorMessage += '🔧 EmailJS Error:\n' + error.message + '\n\n💡 Check your EmailJS configuration:\n• Public Key\n• Service ID\n• Template ID\n• Gmail service connection';
+                } else if (error.message.includes('Netlify')) {
+                    errorMessage += '🔧 Netlify Forms Error:\n' + error.message + '\n\n💡 Make sure Netlify Forms are enabled on your site.';
+                } else {
+                    errorMessage += error.message;
+                }
+                
+                alert(errorMessage);
                 logActivity('test_email_failed', `Test email failed: ${error.message}`);
+            } finally {
+                // Restore button
+                testBtn.disabled = false;
+                testBtn.textContent = originalText;
             }
+        }
+
+        // ===== COMPATIBILITY ALIAS =====
+        function testEmailNotification() {
+            sendTestEmail();
         }
 function savePayPalSettings() {
             systemSettings.paypalClientId = document.getElementById('paypalClientId').value.trim();
