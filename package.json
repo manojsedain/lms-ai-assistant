@@ -1,4 +1,3 @@
-// package.json (for Netlify Functions dependencies)
 {
   "name": "lms-ai-assistant-functions",
   "version": "1.0.0",
