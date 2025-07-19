@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LMS AI - Admin Panel</title>
+    <!-- EmailJS for notifications -->
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -94,7 +96,7 @@
             font-weight: bold;
             color: #2c3e50;
         }
-        input, select {
+        input, select, textarea {
             width: 100%;
             padding: 12px;
             border: 2px solid #bdc3c7;
@@ -103,7 +105,7 @@
             box-sizing: border-box;
             transition: border-color 0.3s;
         }
-        input:focus, select:focus {
+        input:focus, select:focus, textarea:focus {
             border-color: #3498db;
             outline: none;
             box-shadow: 0 0 5px rgba(52, 152, 219, 0.3);
@@ -141,6 +143,12 @@
         }
         .btn-secondary {
             background: linear-gradient(135deg, #95a5a6, #7f8c8d) !important;
+        }
+        .btn-copy {
+            background: linear-gradient(135deg, #9b59b6, #8e44ad) !important;
+            padding: 5px 10px !important;
+            font-size: 12px !important;
+            margin: 2px !important;
         }
         .generated-key {
             background: linear-gradient(135deg, #d5f4e6, #c8e6c9);
@@ -180,7 +188,7 @@
             border-left-color: #f39c12;
             opacity: 0.9;
         }
-        .delete-btn, .toggle-btn {
+        .delete-btn, .toggle-btn, .copy-btn {
             position: absolute;
             top: 15px;
             right: 15px;
@@ -190,6 +198,9 @@
         }
         .toggle-btn {
             right: 100px;
+        }
+        .copy-btn {
+            right: 200px;
         }
         .stats {
             display: grid;
@@ -233,17 +244,6 @@
         .hidden {
             display: none;
         }
-        textarea {
-            width: 100%;
-            height: 300px;
-            padding: 15px;
-            border: 2px solid #bdc3c7;
-            border-radius: 8px;
-            font-family: 'Courier New', monospace;
-            font-size: 12px;
-            box-sizing: border-box;
-            background: #f8f9fa;
-        }
         .success-message {
             background: linear-gradient(135deg, #d5f4e6, #c8e6c9);
             color: #27ae60;
@@ -260,15 +260,6 @@
             border-left: 5px solid #3498db;
             background: linear-gradient(135deg, #e3f2fd, #bbdefb);
         }
-        .connection-test {
-            display: inline-block;
-            padding: 8px 15px;
-            background: #3498db;
-            color: white;
-            border-radius: 5px;
-            font-size: 12px;
-            margin-left: 10px;
-        }
         .loading-spinner {
             display: inline-block;
             width: 16px;
@@ -284,10 +275,17 @@
             100% { transform: rotate(360deg); }
         }
     </style>
-    <!-- EmailJS for notifications -->
-    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
 </head>
 <body>
+    <!-- Hidden Netlify Form for Notifications -->
+    <form name="contact" netlify hidden>
+        <input type="text" name="name" />
+        <input type="email" name="email" />
+        <input type="text" name="subject" />
+        <input type="text" name="message" />
+        <input type="text" name="timestamp" />
+    </form>
+
     <!-- Login Screen -->
     <div id="loginContainer" class="login-container">
         <h1>🔐 Admin Login</h1>
@@ -296,9 +294,113 @@
         <button onclick="attemptLogin()">🚀 Login</button>
         <div id="errorMessage" class="error-message hidden"></div>
     </div>
-<!-- Admin Panel (Hidden) -->
+
+    <!-- Admin Panel (Hidden) -->
     <div id="adminContainer" class="admin-container">
         <h1>🔑 LMS AI Assistant - Admin Panel</h1>
+        
+        <!-- Header Controls -->
+        <div style="text-align: right; margin-bottom: 20px; padding: 15px; background: #ecf0f1; border-radius: 8px;">
+            <span style="color: #7f8c8d; margin-right: 20px;">👤 Administrator</span>
+            <button onclick="testDatabaseConnection()" class="btn-secondary">🔍 Test DB</button>
+            <button onclick="logout()" class="btn-danger">🚪 Logout</button>
+        </div>
+        
+        <!-- Database Connection Status -->
+        <div class="database-status" id="dbStatus">
+            <strong>🗄️ Database Status:</strong> 
+            <span id="dbStatusText">Checking connection...</span>
+            <span class="loading-spinner" id="dbSpinner"></span>
+        </div>
+        
+        <!-- Statistics Dashboard -->
+        <div class="admin-section">
+            <h3>📊 System Statistics</h3>
+            <div class="stats">
+                <div class="stat-card blue">
+                    <div class="stat-number" id="totalKeys">0</div>
+                    <div class="stat-label">Total Keys</div>
+                </div>
+                <div class="stat-card green">
+                    <div class="stat-number" id="activeKeys">0</div>
+                    <div class="stat-label">Active Keys</div>
+                </div>
+                <div class="stat-card red">
+                    <div class="stat-number" id="expiredKeys">0</div>
+                    <div class="stat-label">Expired Keys</div>
+                </div>
+                <div class="stat-card orange">
+                    <div class="stat-number" id="totalDownloads">0</div>
+                    <div class="stat-label">Total Downloads</div>
+                </div>
+            </div>
+        </div>
+<!-- Key Generator -->
+        <div class="admin-section">
+            <h3>🔑 Generate New Key</h3>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div>
+                    <div class="form-group">
+                        <label for="userName">👤 User Name:</label>
+                        <input type="text" id="userName" placeholder="Enter full name (e.g., John Smith)">
+                    </div>
+                    <div class="form-group">
+                        <label for="keyDuration">⏰ License Duration:</label>
+                        <select id="keyDuration">
+                            <option value="1">1 Month</option>
+                            <option value="3">3 Months</option>
+                            <option value="6">6 Months</option>
+                            <option value="12" selected>1 Year</option>
+                            <option value="24">2 Years</option>
+                            <option value="0">Permanent</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <div class="form-group">
+                        <label for="keyType">🏷️ Key Type:</label>
+                        <select id="keyType">
+                            <option value="STANDARD">Standard User</option>
+                            <option value="PREMIUM">Premium User</option>
+                            <option value="ADMIN">Admin User</option>
+                            <option value="TEST">Test User</option>
+                            <option value="STUDENT">Student User</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="userEmail">📧 Email (Optional):</label>
+                        <input type="email" id="userEmail" placeholder="user@example.com">
+                    </div>
+                </div>
+            </div>
+            
+            <div style="margin-top: 20px;">
+                <button onclick="generateNewKey()" class="btn-success">🔑 Generate Key</button>
+                <button onclick="saveKeyToDatabase()" id="saveBtn" class="btn-success" disabled>💾 Save to Database</button>
+                <button onclick="clearKeyForm()" class="btn-secondary">🗑️ Clear Form</button>
+            </div>
+            
+            <div id="generatedKeyDisplay" class="generated-key hidden">
+                <h4>✅ New Key Generated Successfully!</h4>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div>
+                        <strong>🔑 Key Code:</strong> <span id="newKeyCode" style="font-family: monospace; background: #fff; padding: 5px; border-radius: 3px;"></span><br>
+                        <strong>👤 User Name:</strong> <span id="newKeyName"></span><br>
+                        <strong>⏰ Expires:</strong> <span id="newKeyExpiry"></span>
+                    </div>
+                    <div>
+                        <strong>🏷️ Type:</strong> <span id="newKeyType"></span><br>
+                        <strong>🔐 Encryption Key:</strong> <small id="newEncryptionKey" style="font-family: monospace; word-break: break-all;"></small>
+                    </div>
+                </div>
+                <button onclick="copyKeyToClipboard()" class="btn-secondary" style="margin-top: 10px;">📋 Copy Key</button>
+            </div>
+            
+            <div id="saveSuccess" class="success-message hidden">
+                ✅ Key saved successfully! It will work immediately on the main site.
+            </div>
+        </div>
+
         <!-- Admin Settings -->
         <div class="admin-section">
             <h3>⚙️ System Settings</h3>
@@ -318,13 +420,31 @@
                     </div>
                     <div class="form-group">
                         <label for="emailService">Email Service:</label>
-                        <select id="emailService">
+                        <select id="emailService" onchange="toggleEmailFields()">
                             <option value="disabled">Disabled</option>
-                            <option value="emailjs">EmailJS (Free)</option>
                             <option value="netlify">Netlify Forms</option>
+                            <option value="emailjs">EmailJS (Free)</option>
                         </select>
                     </div>
+                    <div id="emailjsFields" class="hidden">
+                        <div class="form-group">
+                            <label for="emailjsPublicKey">EmailJS Public Key:</label>
+                            <input type="text" id="emailjsPublicKey" placeholder="Your EmailJS public key">
+                        </div>
+                        <div class="form-group">
+                            <label for="emailjsServiceId">EmailJS Service ID:</label>
+                            <input type="text" id="emailjsServiceId" placeholder="service_xxxxxxx">
+                        </div>
+                        <div class="form-group">
+                            <label for="emailjsTemplateId">EmailJS Template ID:</label>
+                            <input type="text" id="emailjsTemplateId" placeholder="template_xxxxxxx">
+                        </div>
+                        <p style="font-size: 12px; color: #666;">
+                            📝 <a href="https://emailjs.com" target="_blank">Get free EmailJS account</a> for email notifications
+                        </p>
+                    </div>
                     <button onclick="saveEmailSettings()" class="btn-success">💾 Save Email Settings</button>
+                    <button onclick="testEmailNotification()" class="btn-secondary">📧 Test Email</button>
                 </div>
                 
                 <div>
@@ -418,111 +538,7 @@
                 <!-- Bulk keys will appear here -->
             </div>
         </div>
-        
-        <!-- Header Controls -->
-        <div style="text-align: right; margin-bottom: 20px; padding: 15px; background: #ecf0f1; border-radius: 8px;">
-            <span style="color: #7f8c8d; margin-right: 20px;">👤 Administrator</span>
-            <button onclick="testDatabaseConnection()" class="btn-secondary">🔍 Test DB</button>
-            <button onclick="logout()" class="btn-danger">🚪 Logout</button>
-        </div>
-        
-        <!-- Database Connection Status -->
-        <div class="database-status" id="dbStatus">
-            <strong>🗄️ Database Status:</strong> 
-            <span id="dbStatusText">Checking connection...</span>
-            <span class="loading-spinner" id="dbSpinner"></span>
-        </div>
-        
-        <!-- Statistics Dashboard -->
-        <div class="admin-section">
-            <h3>📊 System Statistics</h3>
-            <div class="stats">
-                <div class="stat-card blue">
-                    <div class="stat-number" id="totalKeys">0</div>
-                    <div class="stat-label">Total Keys</div>
-                </div>
-                <div class="stat-card green">
-                    <div class="stat-number" id="activeKeys">0</div>
-                    <div class="stat-label">Active Keys</div>
-                </div>
-                <div class="stat-card red">
-                    <div class="stat-number" id="expiredKeys">0</div>
-                    <div class="stat-label">Expired Keys</div>
-                </div>
-                <div class="stat-card orange">
-                    <div class="stat-number" id="totalDownloads">0</div>
-                    <div class="stat-label">Total Downloads</div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Key Generator -->
-        <div class="admin-section">
-            <h3>🔑 Generate New Key</h3>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-                <div>
-                    <div class="form-group">
-                        <label for="userName">👤 User Name:</label>
-                        <input type="text" id="userName" placeholder="Enter full name (e.g., John Smith)">
-                    </div>
-                    <div class="form-group">
-                        <label for="keyDuration">⏰ License Duration:</label>
-                        <select id="keyDuration">
-                            <option value="1">1 Month</option>
-                            <option value="3">3 Months</option>
-                            <option value="6">6 Months</option>
-                            <option value="12" selected>1 Year</option>
-                            <option value="24">2 Years</option>
-                            <option value="0">Permanent</option>
-                        </select>
-                    </div>
-                </div>
-                <div>
-                    <div class="form-group">
-                        <label for="keyType">🏷️ Key Type:</label>
-                        <select id="keyType">
-                            <option value="STANDARD">Standard User</option>
-                            <option value="PREMIUM">Premium User</option>
-                            <option value="ADMIN">Admin User</option>
-                            <option value="TEST">Test User</option>
-                            <option value="STUDENT">Student User</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="userEmail">📧 Email (Optional):</label>
-                        <input type="email" id="userEmail" placeholder="user@example.com">
-                    </div>
-                </div>
-            </div>
-            
-            <div style="margin-top: 20px;">
-                <button onclick="generateNewKey()" class="btn-success">🔑 Generate Key</button>
-                <button onclick="saveKeyToDatabase()" id="saveBtn" class="btn-success" disabled>💾 Save to Database</button>
-                <button onclick="clearKeyForm()" class="btn-secondary">🗑️ Clear Form</button>
-            </div>
-            
-            <div id="generatedKeyDisplay" class="generated-key hidden">
-                <h4>✅ New Key Generated Successfully!</h4>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-                    <div>
-                        <strong>🔑 Key Code:</strong> <span id="newKeyCode" style="font-family: monospace; background: #fff; padding: 5px; border-radius: 3px;"></span><br>
-                        <strong>👤 User Name:</strong> <span id="newKeyName"></span><br>
-                        <strong>⏰ Expires:</strong> <span id="newKeyExpiry"></span>
-                    </div>
-                    <div>
-                        <strong>🏷️ Type:</strong> <span id="newKeyType"></span><br>
-                        <strong>🔐 Encryption Key:</strong> <small id="newEncryptionKey" style="font-family: monospace; word-break: break-all;"></small>
-                    </div>
-                </div>
-                <button onclick="copyKeyToClipboard()" class="btn-secondary" style="margin-top: 10px;">📋 Copy Key</button>
-            </div>
-            
-            <div id="saveSuccess" class="success-message hidden">
-                ✅ Key saved successfully! It will work immediately on the main site.
-            </div>
-        </div>
-
-        <!-- Key Management -->
+<!-- Key Management -->
         <div class="admin-section">
             <h3>📋 Key Database Management</h3>
             <div style="margin-bottom: 15px;">
@@ -540,7 +556,8 @@
                 </div>
             </div>
         </div>
-<!-- Import/Export Section -->
+
+        <!-- Import/Export Section -->
         <div id="importSection" class="admin-section hidden">
             <h3>📥 Database Backup & Restore</h3>
             <p><strong>📋 Instructions:</strong></p>
@@ -552,7 +569,7 @@
             
             <div class="form-group">
                 <label for="exportData">🗄️ Database JSON Content:</label>
-                <textarea id="exportData" placeholder="Database JSON content will appear here..."></textarea>
+                <textarea id="exportData" placeholder="Database JSON content will appear here..." style="height: 300px;"></textarea>
             </div>
             
             <div style="margin-top: 15px;">
@@ -569,12 +586,13 @@
             <div style="margin-bottom: 15px;">
                 <button onclick="refreshActivityLog()" class="btn-success">🔄 Refresh</button>
                 <button onclick="clearActivityLog()" class="btn-danger">🗑️ Clear Log</button>
-                <select id="logFilter" onchange="filterActivityLog()" style="margin-left: 10px;">
+                <select id="logFilter" onchange="filterActivityLog()" style="margin-left: 10px; width: auto;">
                     <option value="all">All Activities</option>
                     <option value="validation">Key Validations</option>
                     <option value="creation">Key Creation</option>
                     <option value="download">Downloads</option>
                     <option value="error">Errors</option>
+                    <option value="admin">Admin Actions</option>
                 </select>
             </div>
             
@@ -584,9 +602,54 @@
                 </div>
             </div>
         </div>
-    </div>
 
-  <script>
+        <!-- Email Test & Analytics -->
+        <div class="admin-section">
+            <h3>📊 Analytics & Testing</h3>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
+                <div>
+                    <h4>📧 Email Testing</h4>
+                    <div class="form-group">
+                        <label for="testEmailAddress">Test Email Address:</label>
+                        <input type="email" id="testEmailAddress" placeholder="test@example.com">
+                    </div>
+                    <div class="form-group">
+                        <label for="testEmailSubject">Test Subject:</label>
+                        <input type="text" id="testEmailSubject" value="LMS AI Admin Test" placeholder="Test subject">
+                    </div>
+                    <div class="form-group">
+                        <label for="testEmailMessage">Test Message:</label>
+                        <textarea id="testEmailMessage" placeholder="Test message content" style="height: 100px;">This is a test email from your LMS AI Admin Panel.</textarea>
+                    </div>
+                    <button onclick="sendTestEmail()" class="btn-secondary">📧 Send Test Email</button>
+                </div>
+                
+                <div>
+                    <h4>📈 Quick Stats</h4>
+                    <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 4px solid #3498db;">
+                        <p><strong>📅 Today's Activity:</strong></p>
+                        <ul style="margin: 10px 0; padding-left: 20px;">
+                            <li>Keys Generated: <span id="todayKeysGenerated">0</span></li>
+                            <li>Keys Validated: <span id="todayKeysValidated">0</span></li>
+                            <li>Scripts Downloaded: <span id="todayDownloads">0</span></li>
+                            <li>Admin Logins: <span id="todayLogins">0</span></li>
+                        </ul>
+                        <button onclick="calculateTodayStats()" class="btn-secondary" style="font-size: 12px; padding: 8px 15px;">🔄 Calculate</button>
+                    </div>
+                    
+                    <h4 style="margin-top: 20px;">🔧 System Info</h4>
+                    <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 4px solid #27ae60;">
+                        <p><strong>📝 Version:</strong> 2.0.0</p>
+                        <p><strong>🗄️ Storage:</strong> localStorage + Netlify</p>
+                        <p><strong>🌐 Environment:</strong> <span id="environmentInfo">Production</span></p>
+                        <p><strong>📊 Database Size:</strong> <span id="databaseSize">Calculating...</span></p>
+                        <button onclick="calculateSystemInfo()" class="btn-secondary" style="font-size: 12px; padding: 8px 15px;">🔄 Refresh Info</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+<script>
         // ===== CONFIGURATION =====
         const API_BASE = '/.netlify/functions';
         
@@ -620,19 +683,21 @@
                 }
             }
             
-            // Update UI
-            if (document.getElementById('notificationEmail')) {
-                document.getElementById('notificationEmail').value = systemSettings.notificationEmail;
-                document.getElementById('emailService').value = systemSettings.emailService;
-                document.getElementById('paypalClientId').value = systemSettings.paypalClientId;
-                document.getElementById('paypalEnvironment').value = systemSettings.paypalEnvironment;
-                document.getElementById('keyPrice').value = systemSettings.keyPrice;
-                document.getElementById('emailjsPublicKey').value = systemSettings.emailjsPublicKey;
-                document.getElementById('emailjsServiceId').value = systemSettings.emailjsServiceId;
-                document.getElementById('emailjsTemplateId').value = systemSettings.emailjsTemplateId;
-                
-                toggleEmailFields();
-            }
+            // Update UI if elements exist
+            setTimeout(() => {
+                if (document.getElementById('notificationEmail')) {
+                    document.getElementById('notificationEmail').value = systemSettings.notificationEmail;
+                    document.getElementById('emailService').value = systemSettings.emailService;
+                    document.getElementById('paypalClientId').value = systemSettings.paypalClientId;
+                    document.getElementById('paypalEnvironment').value = systemSettings.paypalEnvironment;
+                    document.getElementById('keyPrice').value = systemSettings.keyPrice;
+                    document.getElementById('emailjsPublicKey').value = systemSettings.emailjsPublicKey;
+                    document.getElementById('emailjsServiceId').value = systemSettings.emailjsServiceId;
+                    document.getElementById('emailjsTemplateId').value = systemSettings.emailjsTemplateId;
+                    
+                    toggleEmailFields();
+                }
+            }, 100);
         }
 
         function saveSystemSettings() {
@@ -656,6 +721,8 @@
                     console.warn('Could not load settings, using default password');
                 }
             }
+            
+            console.log('Current admin password:', currentPassword); // For debugging
             
             if (password === currentPassword) {
                 document.getElementById('loginContainer').style.display = 'none';
@@ -709,7 +776,7 @@
                 alert('✅ Admin password updated successfully!\n\nNew password: ' + newPassword + '\n\nThis works for both admin panel and main site secret access.');
                 document.getElementById('newAdminPassword').value = '';
                 
-                logActivity('admin_password_changed', 'Admin password updated');
+                logActivity('admin_password_changed', 'Admin password updated to: ' + newPassword);
             }
         }
 
@@ -755,12 +822,125 @@
             systemSettings.emailjsTemplateId = document.getElementById('emailjsTemplateId').value.trim();
             
             saveSystemSettings();
-            alert('✅ Email settings saved successfully!');
             
+            if (systemSettings.emailService === 'emailjs' && systemSettings.emailjsPublicKey) {
+                emailjs.init(systemSettings.emailjsPublicKey);
+            }
+            
+            alert('✅ Email settings saved successfully!');
             logActivity('email_settings_updated', `Email service: ${systemSettings.emailService}`);
         }
 
-        function savePayPalSettings() {
+        async function sendEmailNotification(type, data) {
+            if (systemSettings.emailService === 'disabled') {
+                return;
+            }
+            
+            try {
+                if (systemSettings.emailService === 'netlify') {
+                    await sendNetlifyFormEmail(type, data);
+                } else if (systemSettings.emailService === 'emailjs') {
+                    await sendEmailJSNotification(type, data);
+                }
+                
+                console.log('Email notification sent:', type);
+                logActivity('email_sent', `${type} notification sent`);
+            } catch (error) {
+                console.error('Email send failed:', error);
+                logActivity('email_failed', `Failed to send ${type}: ${error.message}`);
+            }
+        }
+
+        async function sendNetlifyFormEmail(type, data) {
+            const formData = new FormData();
+            formData.append('form-name', 'contact');
+            formData.append('name', 'LMS AI System');
+            formData.append('email', systemSettings.notificationEmail);
+            formData.append('subject', `LMS AI - ${type}`);
+            formData.append('message', formatEmailMessage(type, data));
+            formData.append('timestamp', new Date().toISOString());
+
+            const response = await fetch('/', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (!response.ok) {
+                throw new Error('Netlify form submission failed');
+            }
+        }
+
+        async function sendEmailJSNotification(type, data) {
+            if (!systemSettings.emailjsPublicKey || !systemSettings.emailjsServiceId || !systemSettings.emailjsTemplateId) {
+                throw new Error('EmailJS not configured');
+            }
+
+            const templateParams = {
+                to_email: systemSettings.notificationEmail,
+                subject: `LMS AI - ${type}`,
+                message: formatEmailMessage(type, data),
+                timestamp: new Date().toLocaleString()
+            };
+
+            await emailjs.send(
+                systemSettings.emailjsServiceId,
+                systemSettings.emailjsTemplateId,
+                templateParams
+            );
+        }
+
+        function formatEmailMessage(type, data) {
+            switch (type) {
+                case 'Key Validation':
+                    return `Key ${data.keyCode} was validated by ${data.userName} at ${new Date().toLocaleString()}`;
+                case 'Key Generated':
+                    return `New key ${data.keyCode} generated for ${data.userName}`;
+                case 'Bulk Keys Generated':
+                    return `${data.count} bulk keys generated with prefix ${data.prefix}`;
+                case 'Script Download':
+                    return `User ${data.userName} downloaded script using key ${data.keyCode}`;
+                case 'Test Email':
+                    return data.message || 'This is a test email from LMS AI Admin Panel';
+                default:
+                    return `LMS AI Activity: ${type}`;
+            }
+        }
+
+        async function sendTestEmail() {
+            const testEmail = document.getElementById('testEmailAddress').value.trim();
+            const testSubject = document.getElementById('testEmailSubject').value.trim();
+            const testMessage = document.getElementById('testEmailMessage').value.trim();
+            
+            if (!testEmail) {
+                alert('❌ Please enter a test email address');
+                return;
+            }
+            
+            if (systemSettings.emailService === 'disabled') {
+                alert('❌ Email service is disabled. Please configure email settings first.');
+                return;
+            }
+            
+            try {
+                const originalEmail = systemSettings.notificationEmail;
+                systemSettings.notificationEmail = testEmail;
+                
+                await sendEmailNotification('Test Email', {
+                    message: testMessage,
+                    subject: testSubject
+                });
+                
+                systemSettings.notificationEmail = originalEmail;
+                
+                alert('✅ Test email sent successfully!\nCheck your inbox.');
+                logActivity('test_email_sent', `Test email sent to ${testEmail}`);
+                
+            } catch (error) {
+                alert('❌ Failed to send test email:\n' + error.message);
+                logActivity('test_email_failed', `Test email failed: ${error.message}`);
+            }
+        }
+function savePayPalSettings() {
             systemSettings.paypalClientId = document.getElementById('paypalClientId').value.trim();
             systemSettings.paypalEnvironment = document.getElementById('paypalEnvironment').value;
             
@@ -836,6 +1016,13 @@
             document.getElementById('saveBtn').disabled = false;
             
             logActivity('key_generated', `Generated key ${keyCode} for ${userName}`);
+            
+            // Send email notification
+            sendEmailNotification('Key Generated', {
+                keyCode: keyCode,
+                userName: userName,
+                keyType: keyType
+            });
         }
 
         async function saveKeyToDatabase() {
@@ -981,7 +1168,7 @@
                 
                 return `
                     <div class="key-item ${statusClass}">
-                        <div style="margin-right: 200px;">
+                        <div style="margin-right: 250px;">
                             <strong>👤 ${keyData.name}</strong> 
                             <span style="background: #ecf0f1; padding: 2px 8px; border-radius: 3px; font-size: 11px; margin-left: 10px;">
                                 ${keyData.type || 'STANDARD'}
@@ -991,6 +1178,9 @@
                             <small><strong>📊 Status:</strong> ${statusIcon} ${statusText} | <strong>📥 Downloads:</strong> ${keyData.download_count || 0} | <strong>🕒 Last Used:</strong> ${lastUsed}</small>
                         </div>
                         
+                        <button onclick="copyKeyFromList('${keyCode}')" class="copy-btn btn-copy">
+                            📋 Copy
+                        </button>
                         <button onclick="toggleKeyStatus('${keyCode}')" class="toggle-btn btn-warning">
                             ${isActive ? '🔒 Deactivate' : '🔓 Activate'}
                         </button>
@@ -1000,6 +1190,22 @@
                     </div>
                 `;
             }).join('');
+        }
+
+        function copyKeyFromList(keyCode) {
+            navigator.clipboard.writeText(keyCode).then(() => {
+                alert(`📋 Key ${keyCode} copied to clipboard!`);
+                logActivity('key_copied', `Key ${keyCode} copied to clipboard`);
+            }).catch(() => {
+                const textArea = document.createElement('textarea');
+                textArea.value = keyCode;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                alert(`📋 Key ${keyCode} copied to clipboard!`);
+                logActivity('key_copied', `Key ${keyCode} copied to clipboard`);
+            });
         }
 
         function toggleKeyStatus(keyCode) {
@@ -1038,6 +1244,281 @@
             logActivity('key_deleted', `Key ${keyCode} deleted permanently`);
         }
 
+        async function loadFromDatabase() {
+            // This function could connect to real database in the future
+            refreshKeyList();
+            updateStatistics();
+            logActivity('database_sync', 'Keys loaded from local storage');
+        }
+
+        function exportDatabase() {
+            const localKeys = JSON.parse(localStorage.getItem('lms_ai_local_keys') || '{}');
+            const allKeys = { ...keysDatabase, ...localKeys };
+            
+            const exportData = {
+                keys: allKeys,
+                exported_at: new Date().toISOString(),
+                version: "2.0.0",
+                total_keys: Object.keys(allKeys).length
+            };
+            
+            const jsonString = JSON.stringify(exportData, null, 2);
+            document.getElementById('exportData').value = jsonString;
+            showImportSection();
+            
+            logActivity('database_exported', `Exported ${Object.keys(allKeys).length} keys`);
+        }
+
+        function showImportSection() {
+            document.getElementById('importSection').classList.remove('hidden');
+            if (!document.getElementById('exportData').value) {
+                exportDatabase();
+            }
+        }
+
+        function hideImportSection() {
+            document.getElementById('importSection').classList.add('hidden');
+        }
+
+        function copyToClipboard() {
+            const exportData = document.getElementById('exportData');
+            exportData.select();
+            navigator.clipboard.writeText(exportData.value).then(() => {
+                alert('✅ Database JSON copied to clipboard!\n\nYou can save this as a backup file.');
+            }).catch(() => {
+                document.execCommand('copy');
+                alert('✅ Database JSON copied to clipboard!');
+            });
+        }
+
+        function downloadDatabase() {
+            const content = document.getElementById('exportData').value;
+            const blob = new Blob([content], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `lms-ai-database-backup-${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            
+            alert('✅ Database backup downloaded!\n\nKeep this file safe for restore purposes.');
+            logActivity('database_downloaded', 'Database backup file downloaded');
+        }
+
+        function restoreFromJson() {
+            const jsonContent = document.getElementById('exportData').value.trim();
+            
+            if (!jsonContent) {
+                alert('❌ Please paste JSON content first!');
+                return;
+            }
+            
+            if (!confirm('⚠️ This will overwrite your current database!\n\nAre you sure you want to restore from this backup?')) {
+                return;
+            }
+            
+            try {
+                const data = JSON.parse(jsonContent);
+                
+                if (data.keys && typeof data.keys === 'object') {
+                    keysDatabase = data.keys;
+                    localStorage.setItem('lms_ai_local_keys', JSON.stringify(data.keys));
+                    
+                    refreshKeyList();
+                    updateStatistics();
+                    
+                    alert(`✅ Database restored successfully!\n\nRestored ${Object.keys(data.keys).length} keys.`);
+                    logActivity('database_restored', `Restored ${Object.keys(data.keys).length} keys from backup`);
+                    
+                    hideImportSection();
+                } else {
+                    throw new Error('Invalid backup format');
+                }
+                
+            } catch (error) {
+                alert(`❌ Restore failed!\n\nError: ${error.message}\n\nPlease check the JSON format.`);
+                logActivity('database_restore_failed', `Restore failed: ${error.message}`);
+            }
+        }
+
+        // ===== BULK KEY GENERATION =====
+        function generateBulkKeys() {
+            const count = parseInt(document.getElementById('bulkCount').value);
+            const prefix = document.getElementById('bulkPrefix').value.trim();
+            const duration = parseInt(document.getElementById('bulkDuration').value);
+            const keyType = document.getElementById('bulkType').value;
+            const startNumber = parseInt(document.getElementById('bulkStartNumber').value);
+            const padding = parseInt(document.getElementById('bulkPadding').value);
+            
+            if (!count || count < 1 || count > 1000) {
+                alert('❌ Please enter a valid number of keys (1-1000)');
+                return;
+            }
+            
+            if (!prefix) {
+                alert('❌ Please enter a name prefix');
+                return;
+            }
+            
+            if (confirm(`📦 Generate ${count} keys?\n\nPrefix: ${prefix}\nType: ${keyType}\nThis will take a moment...`)) {
+                bulkGeneratedKeys = [];
+                const bulkList = document.getElementById('bulkKeysList');
+                bulkList.innerHTML = '<div style="text-align: center; padding: 20px;">⏳ Generating keys...</div>';
+                bulkList.classList.remove('hidden');
+                
+                setTimeout(() => {
+                    for (let i = 0; i < count; i++) {
+                        const number = startNumber + i;
+                        const paddedNumber = number.toString().padStart(padding, '0');
+                        const userName = `${prefix}${paddedNumber}`;
+                        
+                        const namePrefix = userName.toUpperCase().replace(/[^A-Z]/g, '').substring(0, 4).padEnd(4, 'X');
+                        const year = new Date().getFullYear();
+                        const random = Math.random().toString(36).substring(2, 8).toUpperCase();
+                        const keyCode = `${namePrefix}-${year}-${random}`;
+                        
+                        let expiryDate;
+                        if (duration === 0) {
+                            expiryDate = "2099-12-31";
+                        } else {
+                            const expiry = new Date();
+                            expiry.setMonth(expiry.getMonth() + duration);
+                            expiryDate = expiry.toISOString().split('T')[0];
+                        }
+                        
+                        const encryptionKey = `${userName.toLowerCase().replace(/\s+/g, '-')}-secret-key-${year}`;
+                        
+                        const keyData = {
+                            keyCode: keyCode,
+                            userName: userName,
+                            expiryDate: expiryDate,
+                            encryptionKey: encryptionKey,
+                            keyType: keyType,
+                            createdAt: new Date().toISOString(),
+                            active: true,
+                            bulk: true
+                        };
+                        
+                        bulkGeneratedKeys.push(keyData);
+                        
+                        keysDatabase[keyCode] = {
+                            name: userName,
+                            expiry: expiryDate,
+                            active: true,
+                            encryptionKey: encryptionKey,
+                            type: keyType,
+                            created: new Date().toISOString().split('T')[0],
+                            download_count: 0,
+                            bulk: true
+                        };
+                    }
+                    
+                    const localKeys = JSON.parse(localStorage.getItem('lms_ai_local_keys') || '{}');
+                    bulkGeneratedKeys.forEach(key => {
+                        localKeys[key.keyCode] = {
+                            name: key.userName,
+                            expiry: key.expiryDate,
+                            active: key.active,
+                            encryptionKey: key.encryptionKey,
+                            type: key.keyType,
+                            created: key.createdAt.split('T')[0],
+                            download_count: 0,
+                            bulk: true
+                        };
+                    });
+                    localStorage.setItem('lms_ai_local_keys', JSON.stringify(localKeys));
+                    
+                    displayBulkKeys();
+                    document.getElementById('exportBulkBtn').disabled = false;
+                    
+                    refreshKeyList();
+                    updateStatistics();
+                    
+                    alert(`✅ Generated ${count} bulk keys successfully!`);
+                    logActivity('bulk_keys_generated', `Generated ${count} ${keyType} keys with prefix ${prefix}`);
+                    
+                    // Send email notification
+                    sendEmailNotification('Bulk Keys Generated', {
+                        count: count,
+                        prefix: prefix,
+                        keyType: keyType
+                    });
+                    
+                }, 500);
+            }
+        }
+
+        function displayBulkKeys() {
+            const bulkList = document.getElementById('bulkKeysList');
+            
+            if (bulkGeneratedKeys.length === 0) {
+                bulkList.classList.add('hidden');
+                return;
+            }
+            
+            bulkList.innerHTML = `
+                <div style="text-align: center; margin-bottom: 15px;">
+                    <strong>📦 ${bulkGeneratedKeys.length} Bulk Keys Generated</strong>
+                </div>
+                ${bulkGeneratedKeys.map((key, index) => `
+                    <div class="key-item" style="font-size: 12px;">
+                        <strong>${key.userName}</strong><br>
+                        <small><strong>Key:</strong> <code>${key.keyCode}</code></small><br>
+                        <small><strong>Expires:</strong> ${key.expiryDate} | <strong>Type:</strong> ${key.keyType}</small>
+                        <button onclick="copyKeyFromList('${key.keyCode}')" class="btn-copy" style="position: absolute; top: 10px; right: 10px; padding: 3px 8px; font-size: 10px;">📋</button>
+                    </div>
+                `).join('')}
+            `;
+            
+            bulkList.classList.remove('hidden');
+        }
+
+        function exportBulkKeys() {
+            if (bulkGeneratedKeys.length === 0) {
+                alert('❌ No bulk keys to export. Generate some keys first.');
+                return;
+            }
+            
+            const headers = ['Username', 'Key Code', 'Expiry Date', 'Key Type', 'Encryption Key', 'Created Date'];
+            const csvContent = [
+                headers.join(','),
+                ...bulkGeneratedKeys.map(key => [
+                    key.userName,
+                    key.keyCode,
+                    key.expiryDate,
+                    key.keyType,
+                    key.encryptionKey,
+                    key.createdAt.split('T')[0]
+                ].join(','))
+            ].join('\n');
+            
+            const blob = new Blob([csvContent], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `bulk-keys-${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+            
+            alert(`✅ Exported ${bulkGeneratedKeys.length} keys to CSV file!`);
+            logActivity('bulk_keys_exported', `Exported ${bulkGeneratedKeys.length} keys to CSV`);
+        }
+
+        function clearBulkKeys() {
+            if (bulkGeneratedKeys.length === 0) {
+                alert('❌ No bulk keys to clear.');
+                return;
+            }
+            
+            if (confirm(`🗑️ Clear ${bulkGeneratedKeys.length} bulk keys?\n\nThis will only clear the bulk view, not delete the keys from database.`)) {
+                bulkGeneratedKeys = [];
+                document.getElementById('bulkKeysList').classList.add('hidden');
+                document.getElementById('exportBulkBtn').disabled = true;
+                
+                alert('✅ Bulk keys view cleared!');
+            }
+        }
+
         // ===== STATISTICS =====
         function updateStatistics() {
             const localKeys = JSON.parse(localStorage.getItem('lms_ai_local_keys') || '{}');
@@ -1054,6 +1535,50 @@
             document.getElementById('activeKeys').textContent = activeKeys;
             document.getElementById('expiredKeys').textContent = expiredKeys;
             document.getElementById('totalDownloads').textContent = totalDownloads;
+        }
+
+        function calculateTodayStats() {
+            const today = new Date().toISOString().split('T')[0];
+            const todayActivities = activityLog.filter(log => 
+                log.timestamp.split('T')[0] === today
+            );
+            
+            const keysGenerated = todayActivities.filter(log => 
+                log.type.includes('key_generated') || log.type.includes('bulk_keys_generated')
+            ).length;
+            
+            const keysValidated = todayActivities.filter(log => 
+                log.type.includes('validation')
+            ).length;
+            
+            const downloads = todayActivities.filter(log => 
+                log.type.includes('download')
+            ).length;
+            
+            const logins = todayActivities.filter(log => 
+                log.type.includes('admin_login') && !log.type.includes('failed')
+            ).length;
+            
+            document.getElementById('todayKeysGenerated').textContent = keysGenerated;
+            document.getElementById('todayKeysValidated').textContent = keysValidated;
+            document.getElementById('todayDownloads').textContent = downloads;
+            document.getElementById('todayLogins').textContent = logins;
+        }
+
+        function calculateSystemInfo() {
+            const localKeys = JSON.parse(localStorage.getItem('lms_ai_local_keys') || '{}');
+            const systemSettings = JSON.parse(localStorage.getItem('lms_ai_system_settings') || '{}');
+            const activityLog = JSON.parse(localStorage.getItem('lms_ai_activity_log') || '[]');
+            
+            const totalSize = JSON.stringify(localKeys).length + 
+                            JSON.stringify(systemSettings).length + 
+                            JSON.stringify(activityLog).length;
+            
+            const sizeInKB = (totalSize / 1024).toFixed(2);
+            
+            document.getElementById('databaseSize').textContent = `${sizeInKB} KB`;
+            document.getElementById('environmentInfo').textContent = 
+                window.location.hostname === 'localhost' ? 'Development' : 'Production';
         }
 
         // ===== ACTIVITY LOG =====
@@ -1079,13 +1604,20 @@
                 return;
             }
             
-            logDiv.innerHTML = filteredLog.map(entry => `
-                <div class="key-item" style="font-size: 12px;">
-                    <strong>${entry.type.toUpperCase()}</strong><br>
+            logDiv.innerHTML = filteredLog.slice(0, 20).map(entry => `
+                <div class="key-item" style="font-size: 12px; border-left-color: ${getLogColor(entry.type)};">
+                    <strong>${entry.type.toUpperCase().replace(/_/g, ' ')}</strong><br>
                     <small>${new Date(entry.timestamp).toLocaleString()}</small><br>
                     ${entry.message}
                 </div>
             `).join('');
+        }
+
+        function getLogColor(type) {
+            if (type.includes('error') || type.includes('failed')) return '#e74c3c';
+            if (type.includes('success') || type.includes('generated') || type.includes('saved')) return '#27ae60';
+            if (type.includes('login') || type.includes('admin')) return '#3498db';
+            return '#95a5a6';
         }
 
         function clearActivityLog() {
@@ -1097,27 +1629,137 @@
             }
         }
 
+        async function testDatabaseConnection() {
+            const statusText = document.getElementById('dbStatusText');
+            const spinner = document.getElementById('dbSpinner');
+            
+            statusText.textContent = 'Testing connection...';
+            spinner.style.display = 'inline-block';
+            
+            try {
+                const response = await fetch(`${API_BASE}/test`);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    isDatabaseConnected = true;
+                    statusText.textContent = `✅ Functions connected - ${data.message}`;
+                    statusText.style.color = '#27ae60';
+                    logActivity('database_test', 'Database connection successful');
+                } else {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+            } catch (error) {
+                isDatabaseConnected = false;
+                statusText.textContent = `❌ Functions unavailable - Using localStorage only`;
+                statusText.style.color = '#e74c3c';
+                logActivity('database_test_failed', `Database connection failed: ${error.message}`);
+            } finally {
+                spinner.style.display = 'none';
+            }
+        }
+
         // ===== INITIALIZATION =====
         function initializeAdmin() {
             loadSystemSettings();
             refreshActivityLog();
             refreshKeyList();
             updateStatistics();
+            calculateTodayStats();
+            calculateSystemInfo();
+            testDatabaseConnection();
             
             console.log('Admin panel initialized successfully');
             logActivity('admin_initialized', 'Admin panel loaded and initialized');
         }
 
-        // ===== EVENT LISTENERS =====
+       // ===== EVENT LISTENERS =====
         document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('loginPassword').addEventListener('keypress', function(e) {
                 if (e.key === 'Enter') {
                     attemptLogin();
                 }
             });
+            
+            // Auto-refresh statistics every 30 seconds
+            setInterval(() => {
+                updateStatistics();
+                calculateTodayStats();
+            }, 30000);
+            
+            // Initialize EmailJS if configured
+            loadSystemSettings();
         });
 
-        console.log('LMS AI Admin Panel loaded successfully!');
+        // Initialize EmailJS when settings are loaded
+        function initializeEmailJS() {
+            if (systemSettings.emailService === 'emailjs' && systemSettings.emailjsPublicKey) {
+                try {
+                    emailjs.init(systemSettings.emailjsPublicKey);
+                    console.log('EmailJS initialized successfully');
+                } catch (error) {
+                    console.error('EmailJS initialization failed:', error);
+                }
+            }
+        }
+
+        // Auto-save settings when changed
+        function autoSaveSettings() {
+            saveSystemSettings();
+            initializeEmailJS();
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            // Ctrl+G to generate new key
+            if (e.ctrlKey && e.key === 'g') {
+                e.preventDefault();
+                if (document.getElementById('adminContainer').style.display !== 'none') {
+                    document.getElementById('userName').focus();
+                }
+            }
+            
+            // Ctrl+S to save current key
+            if (e.ctrlKey && e.key === 's') {
+                e.preventDefault();
+                if (currentGeneratedKey && !document.getElementById('saveBtn').disabled) {
+                    saveKeyToDatabase();
+                }
+            }
+            
+            // Escape to clear forms
+            if (e.key === 'Escape') {
+                if (document.getElementById('generatedKeyDisplay') && !document.getElementById('generatedKeyDisplay').classList.contains('hidden')) {
+                    clearKeyForm();
+                }
+                if (document.getElementById('importSection') && !document.getElementById('importSection').classList.contains('hidden')) {
+                    hideImportSection();
+                }
+            }
+        });
+
+        // Auto-cleanup old activity logs (keep last 100)
+        function cleanupActivityLogs() {
+            if (activityLog.length > 100) {
+                activityLog = activityLog.slice(0, 100);
+                localStorage.setItem('lms_ai_activity_log', JSON.stringify(activityLog));
+            }
+        }
+
+        // Run cleanup every hour
+        setInterval(cleanupActivityLogs, 3600000);
+
+        // Warn before page unload if there's unsaved data
+        window.addEventListener('beforeunload', function(e) {
+            if (currentGeneratedKey && document.getElementById('saveBtn') && !document.getElementById('saveBtn').disabled) {
+                e.preventDefault();
+                e.returnValue = 'You have an unsaved generated key. Are you sure you want to leave?';
+            }
+        });
+
+        // Initialize on load
+        console.log('LMS AI Admin Panel v2.0.0 loaded successfully!');
+        console.log('Features: Key Management, Bulk Generation, Email Notifications, Analytics');
+        console.log('Keyboard shortcuts: Ctrl+G (Generate), Ctrl+S (Save), Esc (Clear)');
     </script>
 </body>
 </html>
