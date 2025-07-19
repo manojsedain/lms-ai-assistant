@@ -1690,16 +1690,303 @@ function savePayPalSettings() {
             loadSystemSettings();
         });
 
-        // Initialize EmailJS when settings are loaded
+// ===== EMAILJS CONFIGURATION =====
+        let emailJSInitialized = false;
+
         function initializeEmailJS() {
             if (systemSettings.emailService === 'emailjs' && systemSettings.emailjsPublicKey) {
                 try {
                     emailjs.init(systemSettings.emailjsPublicKey);
+                    emailJSInitialized = true;
                     console.log('EmailJS initialized successfully');
+                    logActivity('emailjs_initialized', 'EmailJS service initialized');
                 } catch (error) {
                     console.error('EmailJS initialization failed:', error);
+                    emailJSInitialized = false;
+                    logActivity('emailjs_failed', `EmailJS initialization failed: ${error.message}`);
                 }
             }
+        }
+
+        // ===== EMAIL NOTIFICATION FUNCTIONS =====
+        async function sendEmailNotification(type, data) {
+            if (systemSettings.emailService === 'disabled') {
+                console.log('Email notifications disabled');
+                return;
+            }
+            
+            try {
+                if (systemSettings.emailService === 'netlify') {
+                    await sendNetlifyFormEmail(type, data);
+                } else if (systemSettings.emailService === 'emailjs') {
+                    await sendEmailJSNotification(type, data);
+                }
+                
+                console.log('Email notification sent:', type);
+                logActivity('email_sent', `${type} notification sent successfully`);
+            } catch (error) {
+                console.error('Email send failed:', error);
+                logActivity('email_failed', `Failed to send ${type}: ${error.message}`);
+                
+                // Show user-friendly error
+                if (type === 'Test Email') {
+                    alert(`❌ Email test failed:\n${error.message}\n\nPlease check your EmailJS configuration.`);
+                }
+            }
+        }
+
+        async function sendNetlifyFormEmail(type, data) {
+            const formData = new FormData();
+            formData.append('form-name', 'contact');
+            formData.append('name', 'LMS AI System');
+            formData.append('email', systemSettings.notificationEmail);
+            formData.append('subject', `LMS AI - ${type}`);
+            formData.append('message', formatEmailMessage(type, data));
+            formData.append('timestamp', new Date().toISOString());
+
+            const response = await fetch('/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: new URLSearchParams(formData)
+            });
+
+            if (!response.ok) {
+                throw new Error(`Netlify form submission failed: ${response.status}`);
+            }
+        }
+
+        async function sendEmailJSNotification(type, data) {
+            if (!emailJSInitialized) {
+                initializeEmailJS();
+            }
+            
+            if (!systemSettings.emailjsPublicKey || !systemSettings.emailjsServiceId || !systemSettings.emailjsTemplateId) {
+                throw new Error('EmailJS configuration incomplete. Please check Service ID, Template ID, and Public Key.');
+            }
+
+            const templateParams = {
+                to_email: systemSettings.notificationEmail,
+                subject: `LMS AI - ${type}`,
+                message: formatEmailMessage(type, data),
+                timestamp: new Date().toLocaleString(),
+                keyCode: data.keyCode || '',
+                userName: data.userName || '',
+                keyType: data.keyType || '',
+                count: data.count || ''
+            };
+
+            console.log('Sending EmailJS with params:', templateParams);
+
+            const result = await emailjs.send(
+                systemSettings.emailjsServiceId,
+                systemSettings.emailjsTemplateId,
+                templateParams
+            );
+
+            console.log('EmailJS result:', result);
+            return result;
+        }
+
+        function formatEmailMessage(type, data) {
+            const timestamp = new Date().toLocaleString();
+            
+            switch (type) {
+                case 'Key Validation':
+                    return `🔑 Key ${data.keyCode} was successfully validated by user "${data.userName}" at ${timestamp}.\n\nKey Type: ${data.keyType || 'STANDARD'}\nStatus: Valid and Active`;
+                    
+                case 'Key Generated':
+                    return `✅ New license key generated successfully!\n\nKey Code: ${data.keyCode}\nUser Name: ${data.userName}\nKey Type: ${data.keyType}\nCreated: ${timestamp}`;
+                    
+                case 'Bulk Keys Generated':
+                    return `📦 Bulk key generation completed!\n\nCount: ${data.count} keys\nPrefix: ${data.prefix}\nKey Type: ${data.keyType}\nGenerated: ${timestamp}`;
+                    
+                case 'Script Download':
+                    return `📥 User downloaded personalized script!\n\nUser: ${data.userName}\nKey: ${data.keyCode}\nDownload Time: ${timestamp}`;
+                    
+                case 'Key Status Changed':
+                    return `🔄 Key status updated!\n\nKey: ${data.keyCode}\nUser: ${data.userName}\nNew Status: ${data.status}\nChanged: ${timestamp}`;
+                    
+                case 'Key Deleted':
+                    return `🗑️ Key permanently deleted!\n\nKey: ${data.keyCode}\nUser: ${data.userName}\nDeleted: ${timestamp}`;
+                    
+                case 'Admin Login':
+                    return `🔐 Administrator logged into admin panel at ${timestamp}.\n\nSession started successfully.`;
+                    
+                case 'Test Email':
+                    return data.message || `✅ EmailJS test successful!\n\nThis is a test notification from your LMS AI Assistant admin panel.\n\nSent: ${timestamp}\n\nIf you received this email, your notification system is working correctly!`;
+                    
+                default:
+                    return `📬 LMS AI System Activity: ${type}\n\nTimestamp: ${timestamp}\n\nDetails: ${JSON.stringify(data, null, 2)}`;
+            }
+        }
+
+        // ===== EMAIL SETTINGS FUNCTIONS =====
+        function saveEmailSettings() {
+            // Get values from form
+            systemSettings.notificationEmail = document.getElementById('notificationEmail').value.trim();
+            systemSettings.emailService = document.getElementById('emailService').value;
+            systemSettings.emailjsPublicKey = document.getElementById('emailjsPublicKey').value.trim();
+            systemSettings.emailjsServiceId = document.getElementById('emailjsServiceId').value.trim();
+            systemSettings.emailjsTemplateId = document.getElementById('emailjsTemplateId').value.trim();
+            
+            // Validate settings
+            if (systemSettings.emailService === 'emailjs') {
+                if (!systemSettings.emailjsPublicKey) {
+                    alert('❌ Please enter EmailJS Public Key');
+                    return;
+                }
+                if (!systemSettings.emailjsServiceId) {
+                    alert('❌ Please enter EmailJS Service ID');
+                    return;
+                }
+                if (!systemSettings.emailjsTemplateId) {
+                    alert('❌ Please enter EmailJS Template ID');
+                    return;
+                }
+            }
+            
+            if (systemSettings.emailService !== 'disabled' && !systemSettings.notificationEmail) {
+                alert('❌ Please enter notification email address');
+                return;
+            }
+            
+            // Save settings
+            saveSystemSettings();
+            
+            // Initialize EmailJS if configured
+            if (systemSettings.emailService === 'emailjs') {
+                initializeEmailJS();
+            }
+            
+            alert('✅ Email settings saved successfully!');
+            logActivity('email_settings_updated', `Email service: ${systemSettings.emailService}, Email: ${systemSettings.notificationEmail}`);
+        }
+
+        async function sendTestEmail() {
+            const testEmail = document.getElementById('testEmailAddress').value.trim();
+            const testSubject = document.getElementById('testEmailSubject').value.trim();
+            const testMessage = document.getElementById('testEmailMessage').value.trim();
+            
+            if (!testEmail) {
+                alert('❌ Please enter a test email address');
+                return;
+            }
+            
+            if (systemSettings.emailService === 'disabled') {
+                alert('❌ Email service is disabled. Please configure email settings first.');
+                return;
+            }
+            
+            if (systemSettings.emailService === 'emailjs' && !emailJSInitialized) {
+                alert('❌ EmailJS not initialized. Please check your configuration and save settings first.');
+                return;
+            }
+            
+            // Show loading state
+            const testBtn = event.target;
+            const originalText = testBtn.textContent;
+            testBtn.disabled = true;
+            testBtn.textContent = '📧 Sending...';
+            
+            try {
+                // Temporarily use test email
+                const originalEmail = systemSettings.notificationEmail;
+                systemSettings.notificationEmail = testEmail;
+                
+                await sendEmailNotification('Test Email', {
+                    message: testMessage,
+                    subject: testSubject,
+                    testEmail: testEmail
+                });
+                
+                // Restore original email
+                systemSettings.notificationEmail = originalEmail;
+                
+                alert('✅ Test email sent successfully!\n\nCheck your inbox (and spam folder).');
+                logActivity('test_email_sent', `Test email sent to ${testEmail}`);
+                
+            } catch (error) {
+                console.error('Test email error:', error);
+                alert(`❌ Failed to send test email:\n\n${error.message}\n\nPlease check your configuration.`);
+                logActivity('test_email_failed', `Test email failed: ${error.message}`);
+            } finally {
+                // Restore button
+                testBtn.disabled = false;
+                testBtn.textContent = originalText;
+            }
+        }
+
+        // ===== AUTO-TRIGGER EMAIL NOTIFICATIONS =====
+        
+        // Modify existing functions to send notifications
+        const originalGenerateNewKey = generateNewKey;
+        generateNewKey = function() {
+            originalGenerateNewKey();
+            
+            if (currentGeneratedKey) {
+                // Send notification after key generation
+                setTimeout(() => {
+                    sendEmailNotification('Key Generated', {
+                        keyCode: currentGeneratedKey.keyCode,
+                        userName: currentGeneratedKey.userName,
+                        keyType: currentGeneratedKey.keyType
+                    });
+                }, 1000);
+            }
+        };
+
+        const originalGenerateBulkKeys = generateBulkKeys;
+        generateBulkKeys = function() {
+            const count = parseInt(document.getElementById('bulkCount').value);
+            const prefix = document.getElementById('bulkPrefix').value.trim();
+            const keyType = document.getElementById('bulkType').value;
+            
+            originalGenerateBulkKeys();
+            
+            // Send notification after bulk generation
+            setTimeout(() => {
+                if (bulkGeneratedKeys.length > 0) {
+                    sendEmailNotification('Bulk Keys Generated', {
+                        count: count,
+                        prefix: prefix,
+                        keyType: keyType
+                    });
+                }
+            }, 2000);
+        };
+
+        const originalAttemptLogin = attemptLogin;
+        attemptLogin = function() {
+            const password = document.getElementById('loginPassword').value;
+            const currentPassword = getCurrentAdminPassword();
+            
+            if (password === currentPassword) {
+                // Send login notification
+                sendEmailNotification('Admin Login', {
+                    timestamp: new Date().toISOString(),
+                    ip: 'Hidden for security'
+                });
+            }
+            
+            originalAttemptLogin();
+        };
+
+        function getCurrentAdminPassword() {
+            const stored = localStorage.getItem('lms_ai_system_settings');
+            let currentPassword = 'admin2025';
+            
+            if (stored) {
+                try {
+                    const settings = JSON.parse(stored);
+                    currentPassword = settings.adminPassword || 'admin2025';
+                } catch (e) {
+                    console.warn('Could not load settings');
+                }
+            }
+            
+            return currentPassword;
         }
 
         // Auto-save settings when changed
