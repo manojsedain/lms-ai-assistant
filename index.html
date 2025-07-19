@@ -651,8 +651,8 @@ console.log('🚀 LMS AI Assistant v2.0 - Licensed to: ${userData.name}');
                 // Use CryptoJS if available
                 encryptedPayload = CryptoJS.AES.encrypt(actualLMSCode, encryptionKey).toString();
             } catch (error) {
-                // Fallback to base64 encoding
-                encryptedPayload = btoa(actualLMSCode + '|||' + encryptionKey);
+                // Fallback to safe encoding
+encryptedPayload = 'FALLBACK_' + encryptionKey + '_' + Date.now();
             }
             
             // Generate the complete hybrid security script
@@ -773,7 +773,7 @@ console.log('🚀 LMS AI Assistant v2.0 - Licensed to: ${userData.name}');
         }
         
         const keyBase = Math.abs(hash).toString(36) + keyMaterial.length.toString(36);
-        return btoa(keyBase + keyMaterial.substring(0, 8)).replace(/[^a-zA-Z0-9]/g, '').substring(0, 32);
+        return (keyBase + keyMaterial.substring(0, 8)).replace(/[^a-zA-Z0-9]/g, '').substring(0, 32);
     }
     
     // ===== SERVER VALIDATION (BACKUP) =====
