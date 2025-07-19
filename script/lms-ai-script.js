@@ -1,4 +1,41 @@
-
+(function() {
+    'use strict';
+    
+    // ===== LOADER INTEGRATION CHECK =====
+    if (window.LMS_AI_INITIALIZED) {
+        console.log('ℹ️ LMS AI already initialized, skipping...');
+        return;
+    }
+    
+    window.LMS_AI_INITIALIZED = true;
+    
+    // ===== GET USER CONTEXT FROM LOADER =====
+    const USER_CONTEXT = window.LMS_AI_CONTEXT || {
+        LMS_AI_USER: 'Demo User',
+        LMS_AI_LICENSE: 'DEMO-2025-TEST',
+        LMS_AI_EXPIRY: '2025-12-31',
+        LMS_AI_TYPE: 'STANDARD',
+        LMS_AI_LOADER_VERSION: '2.0.0'
+    };
+    
+    console.log('🚀 LMS AI Assistant v2.0 - Licensed to:', USER_CONTEXT.LMS_AI_USER);
+    console.log('📅 License valid until:', USER_CONTEXT.LMS_AI_EXPIRY);
+    console.log('🔑 License Key:', USER_CONTEXT.LMS_AI_LICENSE);
+    
+    // ===== MAKE USER INFO AVAILABLE TO YOUR SCRIPT =====
+    window.LMS_AI = {
+        user: USER_CONTEXT.LMS_AI_USER,
+        license: USER_CONTEXT.LMS_AI_LICENSE,
+        expiry: USER_CONTEXT.LMS_AI_EXPIRY,
+        type: USER_CONTEXT.LMS_AI_TYPE,
+        version: '2.0.0'
+    };
+    
+    // Show loading notification
+    console.log('📦 Loading LMS AI features...');
+    
+    // YOUR EXISTING SCRIPT STARTS HERE...
+    // (Keep all your existing API extraction, question handling, etc.)
 // ==UserScript==
 // @name         LMS AI Assistant Pro (Updated V8.2)
 // @namespace    http://tampermonkey.net/
@@ -2021,5 +2058,96 @@ Performance Overview:
 
     // Start the updated application
     initializeWhenReady();
-
-})();
+// ===== YOUR EXISTING SCRIPT ENDS HERE =====
+    
+    // ===== LOADER INTEGRATION - SUCCESS NOTIFICATION =====
+    
+    function showLMSAILoadedNotification() {
+        const notification = document.createElement('div');
+        notification.style.cssText = `
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: linear-gradient(135deg, #2c3e50, #3498db); color: white;
+            padding: 25px; border-radius: 15px; z-index: 100000;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3); text-align: center;
+            font-family: Arial, sans-serif; max-width: 350px;
+        `;
+        
+        notification.innerHTML = `
+            <h3 style="margin: 0 0 15px 0;">🚀 LMS AI Assistant Active!</h3>
+            <p style="margin: 0 0 10px 0;">Welcome back, ${USER_CONTEXT.LMS_AI_USER}!</p>
+            <p style="margin: 0 0 15px 0; font-size: 14px; opacity: 0.9;">
+                License: ${USER_CONTEXT.LMS_AI_TYPE}<br>
+                Valid until: ${USER_CONTEXT.LMS_AI_EXPIRY}
+            </p>
+            <div style="font-size: 12px; opacity: 0.8; border-top: 1px solid rgba(255,255,255,0.3); padding-top: 15px;">
+                All your LMS AI features are now active!
+            </div>
+            <button onclick="this.parentNode.remove()" style="
+                margin-top: 15px; padding: 8px 15px; background: rgba(255,255,255,0.2);
+                border: none; border-radius: 5px; color: white; cursor: pointer;
+            ">Got it!</button>
+        `;
+        
+        document.body.appendChild(notification);
+        
+        // Auto-remove after 5 seconds
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.parentNode.removeChild(notification);
+            }
+        }, 5000);
+    }
+    
+    // ===== USAGE TRACKING FOR ADMIN NOTIFICATIONS =====
+    function trackLMSAIUsage() {
+        try {
+            const usage = JSON.parse(localStorage.getItem('lms_ai_usage_tracking') || '{}');
+            const today = new Date().toISOString().split('T')[0];
+            
+            if (!usage[today]) {
+                usage[today] = { loads: 0, user: USER_CONTEXT.LMS_AI_USER };
+            }
+            
+            usage[today].loads++;
+            
+            // Keep only last 30 days
+            const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+            Object.keys(usage).forEach(date => {
+                if (date < thirtyDaysAgo) {
+                    delete usage[date];
+                }
+            });
+            
+            localStorage.setItem('lms_ai_usage_tracking', JSON.stringify(usage));
+            
+            // Send notification to admin (non-blocking)
+            fetch(window.location.origin + '/.netlify/functions/notify-usage', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    licenseKey: USER_CONTEXT.LMS_AI_LICENSE,
+                    userName: USER_CONTEXT.LMS_AI_USER,
+                    domain: window.location.hostname,
+                    timestamp: new Date().toISOString(),
+                    action: 'lms_ai_loaded',
+                    features: 'API Extraction, Question Handling, Advanced Features'
+                })
+            }).catch(() => {}); // Silent fail
+            
+        } catch (error) {
+            console.warn('Usage tracking failed:', error);
+        }
+    }
+    
+    // ===== INITIALIZATION COMPLETE =====
+    console.log('✅ LMS AI Assistant loaded successfully!');
+    
+    // Show success notification
+    setTimeout(() => {
+        showLMSAILoadedNotification();
+    }, 1000);
+    
+    // Track usage
+    trackLMSAIUsage();
+    
+})(); // End of main wrapper function
