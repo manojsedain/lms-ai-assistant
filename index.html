@@ -431,49 +431,59 @@
         }
 
         async function handleDownload() {
-            if (isDownloading) return;
+    if (isDownloading) return;
 
-            const password = document.getElementById('accessPassword').value.trim();
-            const downloadBtn = document.querySelector('.download-btn');
-            const downloadText = document.getElementById('downloadText');
-            const downloadLoader = document.getElementById('downloadLoader');
+    const password = document.getElementById('accessPassword').value.trim();
+    const downloadBtn = document.querySelector('.download-btn');
+    const downloadText = document.getElementById('downloadText');
+    const downloadLoader = document.getElementById('downloadLoader');
 
-            if (!password) {
-                showToast('Please enter the access password', 'error');
-                return;
-            }
+    if (!password) {
+        showToast('Please enter the access password', 'error');
+        return;
+    }
 
-            try {
-                isDownloading = true;
-                downloadBtn.disabled = true;
-                downloadText.style.display = 'none';
-                downloadLoader.style.display = 'inline-block';
+    try {
+        isDownloading = true;
+        downloadBtn.disabled = true;
+        downloadText.style.display = 'none';
+        downloadLoader.style.display = 'inline-block';
 
-                // For now, just simulate the download process
-                // In production, this would validate with your Netlify function
-                
-                if (password === 'demo123' || password === 'test123') {
-                    // Simulate API delay
-                    await new Promise(resolve => setTimeout(resolve, 2000));
-                    
-                    // Generate and download the script
-                    downloadScript();
-                    showToast('Script downloaded successfully!', 'success');
-                } else {
-                    showToast('Invalid access password', 'error');
-                }
+        // Call the actual Netlify function
+        const response = await fetch('/.netlify/functions/validate-access', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify({
+                password: password,
+                timestamp: Date.now(),
+                userAgent: navigator.userAgent,
+                referrer: document.referrer
+            })
+        });
 
-            } catch (error) {
-                console.error('Download error:', error);
-                showToast('Download failed. Please try again.', 'error');
-            } finally {
-                isDownloading = false;
-                downloadBtn.disabled = false;
-                downloadText.style.display = 'inline-block';
-                downloadLoader.style.display = 'none';
-            }
+        const result = await response.json();
+
+        if (result.success) {
+            // Generate and download the ScriptCat script
+            downloadScript();
+            showToast('Script downloaded successfully!', 'success');
+        } else {
+            showToast(result.message || 'Invalid access password', 'error');
         }
 
+    } catch (error) {
+        console.error('Download error:', error);
+        showToast('Download failed. Please try again.', 'error');
+    } finally {
+        isDownloading = false;
+        downloadBtn.disabled = false;
+        downloadText.style.display = 'inline-block';
+        downloadLoader.style.display = 'none';
+    }
+}
         function downloadScript() {
             const scriptContent = `// ==UserScript==
 // @name         LMS AI Assistant Authorization
