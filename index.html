@@ -389,51 +389,51 @@ alert('LMS AI Assistant Pro Demo Mode\\nReal script file not found at ./lms-ai-s
         let currentUserData = null;
         
         async function validateAndDownload() {
-            const keyInput = document.getElementById('productKey');
-            const statusDiv = document.getElementById('status');
-            const validateBtn = document.getElementById('validateBtn');
-            const downloadSection = document.getElementById('downloadSection');
+    const keyInput = document.getElementById('productKey');
+    const statusDiv = document.getElementById('status');
+    const validateBtn = document.getElementById('validateBtn');
+    const downloadSection = document.getElementById('downloadSection');
+    
+    const key = keyInput.value.trim();
+    
+    validateBtn.disabled = true;
+    validateBtn.textContent = 'Validating...';
+    
+    try {
+        const result = await validateProductKey(key);
+        
+        statusDiv.classList.remove('hidden', 'success', 'error');
+        
+        if (result.valid) {
+            statusDiv.classList.add('success');
+            statusDiv.textContent = result.message;
             
-            const key = keyInput.value.trim();
+            currentUserData = result.userData;
+            document.getElementById('userName').textContent = result.userData.name;
+            document.getElementById('expiry').textContent = result.userData.expiry;
+            downloadSection.classList.remove('hidden');
             
-            validateBtn.disabled = true;
-            validateBtn.textContent = 'Validating...';
+            sendValidationNotification(result.userData, 'Key Validation');
             
-            try {
-                const result = await validateProductKey(key);
-                
-                statusDiv.classList.remove('hidden', 'success', 'error');
-                
-                if (result.valid) {
-                    statusDiv.classList.add('success');
-                    statusDiv.textContent = result.message;
-                    
-                    currentUserData = result.userData;
-                    document.getElementById('userName').textContent = result.userData.name;
-                    document.getElementById('expiry').textContent = result.userData.expiry;
-                    downloadSection.classList.remove('hidden');
-                    
-                    sendValidationNotification(result.userData, 'Key Validation');
-                    
-                } else {
-                    statusDiv.classList.add('error');
-                    statusDiv.textContent = result.message;
-                    downloadSection.classList.add('hidden');
-                    
-                    sendValidationNotification({ name: 'Unknown' }, 'Invalid Key Attempt');
-                }
-                
-            } catch (error) {
-                statusDiv.classList.remove('hidden', 'success');
-                statusDiv.classList.add('error');
-                statusDiv.textContent = 'Validation failed. Please try again.';
-                
-                sendValidationNotification({ name: 'Error' }, 'Validation Error');
-            } finally {
-                validateBtn.disabled = false;
-                validateBtn.textContent = 'Validate Key';
-            }
+        } else {
+            statusDiv.classList.add('error');
+            statusDiv.textContent = result.message;
+            downloadSection.classList.add('hidden');
+            
+            sendValidationNotification({ name: 'Unknown' }, 'Invalid Key Attempt');
         }
+        
+    } catch (error) {
+        statusDiv.classList.remove('hidden', 'success');
+        statusDiv.classList.add('error');
+        statusDiv.textContent = 'Validation failed. Please try again.';
+        
+        sendValidationNotification({ name: 'Error' }, 'Validation Error');
+    } finally {
+        validateBtn.disabled = false;
+        validateBtn.textContent = 'Validate Key';
+    }
+}
         
         async function downloadScript() {
             if (!currentUserData) {
