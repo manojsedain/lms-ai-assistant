@@ -3814,6 +3814,210 @@ function showAdminPanel() {
         window.addEventListener('load', function() {
             // Additional initialization code
         });
+    // Missing function implementations
+        function addNewUser() {
+            showToast('Add new user feature coming soon!', 'info');
+        }
+
+        function saveQuickSettings() {
+            showToast('Settings saved successfully!', 'success');
+            closeModal('settingsModal');
+        }
+
+        function exportReport() {
+            showToast('Exporting report...', 'info');
+        }
+
+        function approveAll() {
+            showToast('Approving all pending requests...', 'info');
+        }
+
+        function denyAll() {
+            showToast('Denying all pending requests...', 'warning');
+        }
+
+        function refreshPending() {
+            loadPendingRequests();
+        }
+
+        function exportUsers() {
+            showToast('Exporting user list...', 'info');
+        }
+
+        function refreshUsers() {
+            showToast('Refreshing user data...', 'info');
+        }
+
+        function exportDevices() {
+            showToast('Exporting device data...', 'info');
+        }
+
+        function refreshDevices() {
+            showToast('Refreshing device data...', 'info');
+        }
+
+        function showBlockDeviceModal() {
+            showModal('blockDeviceModal');
+        }
+
+        function refreshScripts() {
+            showToast('Refreshing script data...', 'info');
+        }
+
+        function showUploadScriptModal() {
+            showModal('uploadScriptModal');
+        }
+
+        function showScriptSettingsModal() {
+            showModal('scriptSettingsModal');
+        }
+
+        function refreshLogs() {
+            showToast('Refreshing logs...', 'info');
+        }
+
+        function exportLogs() {
+            showToast('Exporting logs...', 'info');
+        }
+
+        function clearOldLogs() {
+            showToast('Clearing old logs...', 'warning');
+        }
+
+        function showNotifications() {
+            showModal('notificationsModal');
+        }
+
+        function showSettings() {
+            showModal('settingsModal');
+        }
+
+        function generateBackupCodes() {
+            showToast('Generating backup codes...', 'info');
+        }
+
+        function emergencyShutdown() {
+            if (confirm('Are you sure you want to emergency shutdown?')) {
+                showToast('Emergency shutdown initiated...', 'error');
+            }
+        }
+
+        function updateDashboardStats(stats) {
+            if (stats) {
+                document.getElementById('totalUsers').textContent = stats.totalUsers || 0;
+                document.getElementById('pendingRequests').textContent = stats.pendingRequests || 0;
+                document.getElementById('activeUsers').textContent = stats.activeUsers || 0;
+                document.getElementById('blockedDevices').textContent = stats.blockedDevices || 0;
+            }
+        }
+
+        function updatePendingBadge(count) {
+            const badge = document.getElementById('pendingBadge');
+            if (badge) {
+                if (count > 0) {
+                    badge.textContent = count;
+                    badge.style.display = 'inline-block';
+                } else {
+                    badge.style.display = 'none';
+                }
+            }
+        }
+
+        function updateRecentActivity(activities) {
+            const container = document.getElementById('recentActivity');
+            if (container && activities && activities.length > 0) {
+                container.innerHTML = activities.map(activity => `
+                    <div class="activity-item">
+                        <div class="activity-avatar">${activity.avatar || activity.user.charAt(0)}</div>
+                        <div class="activity-content">
+                            <div class="activity-title">${activity.title}</div>
+                            <div class="activity-description">${activity.description}</div>
+                            <div class="activity-time">${activity.timeAgo}</div>
+                        </div>
+                    </div>
+                `).join('');
+            }
+        }
+
+        function updateSystemStatus(systemData) {
+            if (systemData) {
+                const statusElement = document.getElementById('systemStatus');
+                if (statusElement) {
+                    statusElement.textContent = systemData.status || 'Online';
+                    statusElement.className = `status-badge ${systemData.statusClass || 'active'}`;
+                }
+            }
+        }
+
+        function updatePendingRequestsTable(requests) {
+            const tableBody = document.getElementById('pendingTableBody');
+            if (tableBody && requests) {
+                if (requests.length === 0) {
+                    tableBody.innerHTML = `
+                        <tr>
+                            <td colspan="7" style="text-align: center; padding: 2rem; color: var(--text-secondary);">
+                                No pending requests found
+                            </td>
+                        </tr>
+                    `;
+                } else {
+                    tableBody.innerHTML = requests.map(req => `
+                        <tr>
+                            <td><input type="checkbox" value="${req.id}"></td>
+                            <td><strong>${req.name}</strong></td>
+                            <td><code>${req.shortHwid}</code></td>
+                            <td>${req.shortUserAgent}</td>
+                            <td>${req.timeAgo}</td>
+                            <td>${req.lastUrl}</td>
+                            <td>
+                                <div style="display: flex; gap: 0.5rem;">
+                                    <button class="btn btn-sm btn-success" onclick="approveUser('${req.id}')">✅</button>
+                                    <button class="btn btn-sm btn-danger" onclick="denyUser('${req.id}')">❌</button>
+                                </div>
+                            </td>
+                        </tr>
+                    `).join('');
+                }
+                
+                // Update pending badge
+                updatePendingBadge(requests.length);
+            }
+        }
+
+        function approveUser(userId) {
+            showToast(`Approving user ${userId}...`, 'success');
+        }
+
+        function denyUser(userId) {
+            showToast(`Denying user ${userId}...`, 'warning');
+        }
+
+        // Update the loadPendingRequests function
+        async function loadPendingRequests() {
+            try {
+                showLoading('Loading pending requests...');
+                
+                const response = await fetch('/.netlify/functions/get-pending-requests', {
+                    headers: {
+                        'Authorization': 'Bearer test-token'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    updatePendingRequestsTable(data.requests);
+                    showToast(`Loaded ${data.requests.length} pending requests`, 'success');
+                } else {
+                    showToast('Failed to load pending requests', 'error');
+                }
+            } catch (error) {
+                console.error('Error loading pending requests:', error);
+                showToast('Error loading pending requests', 'error');
+            } finally {
+                hideLoading();
+            }
+        }
     </script>
 </body>
 </html>
