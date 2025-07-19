@@ -614,39 +614,40 @@
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
                 <div>
 <div>
-                    <h4>📧 Email Testing</h4>
+                    <h4>📧 Quick Email Test</h4>
+                    <p style="color: #666; font-size: 14px;">Send a test email to verify your configuration is working.</p>
+                    
                     <div class="form-group">
-                        <label for="testEmailAddress">Test Email Address:</label>
-                        <input type="email" id="testEmailAddress" placeholder="test@example.com">
+                        <label for="testEmailAddress">Test Email (Optional - will use Notification Email if empty):</label>
+                        <input type="email" id="testEmailAddress" placeholder="Leave empty to use notification email above">
                     </div>
+                    
                     <div class="form-group">
                         <label for="testEmailSubject">Test Subject:</label>
-                        <input type="text" id="testEmailSubject" value="LMS AI Admin Test" placeholder="Test subject">
+                        <input type="text" id="testEmailSubject" value="LMS AI Test - Email System Working!" placeholder="Test subject">
                     </div>
+                    
                     <div class="form-group">
                         <label for="testEmailMessage">Test Message:</label>
-                        <textarea id="testEmailMessage" placeholder="Test message content" style="height: 100px;">✅ EmailJS test successful!
+                        <textarea id="testEmailMessage" style="height: 80px;">🎉 Congratulations!
 
-This is a test notification from your LMS AI Assistant admin panel.
+Your LMS AI email notification system is working perfectly!
 
-If you received this email, your notification system is working correctly!
-
-🎉 Your email notifications are now active and will send alerts for:
-- New key generations
-- Key validations
-- Admin logins
-- Bulk key operations
+✅ EmailJS is configured correctly
+✅ Email notifications are active
+✅ You'll receive alerts for key activities
 
 Happy licensing! 🚀</textarea>
                     </div>
+                    
                     <button onclick="sendTestEmail()" class="btn-secondary">📧 Send Test Email</button>
                     
-                    <div style="margin-top: 15px; padding: 10px; background: #e3f2fd; border-radius: 5px; border-left: 3px solid #2196F3;">
+                    <div style="margin-top: 15px; padding: 10px; background: #fff3cd; border-radius: 5px; border-left: 3px solid #ffc107;">
                         <small>
-                            <strong>💡 Test Tips:</strong><br>
-                            • Make sure to save email settings first<br>
+                            <strong>💡 How it works:</strong><br>
+                            • If "Test Email" is empty, uses "Notification Email" above<br>
                             • Check spam folder if email doesn't arrive<br>
-                            • Gmail may take 1-2 minutes to deliver
+                            • Save email settings first before testing
                         </small>
                     </div>
                 </div>
