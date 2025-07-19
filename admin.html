@@ -3426,7 +3426,8 @@ function initializeAdminPanel() {
             }
         }
 
-     async function loadDashboardData() {
+    async function loadDashboardData() {
+    console.log('🔄 Loading dashboard data...');
     try {
         showLoading('Loading dashboard data...');
         
@@ -3436,20 +3437,32 @@ function initializeAdminPanel() {
             }
         });
         
+        console.log('📡 Response status:', response.status);
         const data = await response.json();
+        console.log('📊 Dashboard data received:', data);
         
         if (data.success) {
-            // Update stats with real data
-            updateDashboardStats(data.stats);
+            console.log('✅ Updating stats with:', data.stats);
+            
+            // Force update the stats immediately
+            if (data.stats) {
+                document.getElementById('totalUsers').textContent = data.stats.totalUsers || 0;
+                document.getElementById('pendingRequests').textContent = data.stats.pendingRequests || 0;
+                document.getElementById('activeUsers').textContent = data.stats.activeUsers || 0;
+                document.getElementById('blockedDevices').textContent = data.stats.blockedDevices || 0;
+                console.log('📈 Stats updated in DOM');
+            }
+            
             updateRecentActivity(data.activity);
             updateSystemStatus(data.system);
             
             showToast('Dashboard data loaded successfully!', 'success');
         } else {
-            showToast('Failed to load dashboard data', 'error');
+            console.error('❌ Dashboard API returned error:', data.message);
+            showToast('Failed to load dashboard data: ' + data.message, 'error');
         }
     } catch (error) {
-        console.error('Error loading dashboard:', error);
+        console.error('💥 Error loading dashboard:', error);
         showToast('Failed to load dashboard data', 'error');
     } finally {
         hideLoading();
