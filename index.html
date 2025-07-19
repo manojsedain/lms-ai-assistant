@@ -216,7 +216,22 @@
                 return null;
             }
         }
-
+// Add this BEFORE the fetch request in validateProductKey function:
+const localKeys = JSON.parse(localStorage.getItem('lms_ai_local_keys') || '{}');
+if (localKeys[key]) {
+    console.log('[LMS AI] Found key in localStorage:', localKeys[key]);
+    return {
+        valid: true,
+        message: "Valid key found in local database!",
+        userData: {
+            name: localKeys[key].name,
+            email: localKeys[key].email || 'user@example.com',
+            expiry: localKeys[key].expiry,
+            type: localKeys[key].type || 'STANDARD',
+            active: localKeys[key].active
+        }
+    };
+}
         // ===== DATABASE-POWERED KEY VALIDATION =====
         async function validateProductKey(key) {
             try {
