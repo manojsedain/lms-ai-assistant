@@ -1,8 +1,5 @@
-(async () => {
-
-  const mainScriptUrl = `https://wrongnumber.netlify.app/script/lms-ai-script.js`;
-  const scriptContent = await fetch(mainScriptUrl).then(r => r.text());
-  // Run the script
-  eval(scriptContent);
+(function() {
+    var script = document.createElement('script');
+    script.src = 'https://wrongnumber.netlify.app/script/lms-ai-script.js';
+    document.head.appendChild(script);
 })();
-
